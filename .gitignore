@@ -1,0 +1,3 @@
+node_modules/
+.next/  # Next.js构建目录
+.env    # 环境变量文件
