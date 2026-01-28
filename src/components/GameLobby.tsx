@@ -1,0 +1,192 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+import { User, Game } from '@/types';
+
+interface GameLobbyProps {
+  currentUser: User;
+  onGameStart: (game: Game) => void;
+}
+
+export default function GameLobby({ currentUser, onGameStart }: GameLobbyProps) {
+  const [friends, setFriends] = useState<User[]>([]);
+  const [waitingGames, setWaitingGames] = useState<Game[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [creatingGame, setCreatingGame] = useState(false);
+
+  useEffect(() => {
+    const loadData = async () => {
+      await loadFriends();
+      await loadWaitingGames();
+    };
+    
+    loadData();
+  }, [currentUser.id]);
+
+  const loadFriends = async () => {
+    try {
+      // 这里简化处理，实际应该从好友关系表中获取
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .neq('id', currentUser.id)
+        .limit(20);
+
+      if (!error && data) {
+        setFriends(data);
+      }
+    } catch (error) {
+      console.error('加载好友错误:', error);
+    }
+  };
+
+  const loadWaitingGames = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('games')
+        .select('*, player1:users!player1_id(*)')
+        .eq('status', 'waiting')
+        .neq('player1_id', currentUser.id)
+        .order('created_at', { ascending: false });
+
+      if (!error && data) {
+        setWaitingGames(data);
+      }
+    } catch (error) {
+      console.error('加载等待游戏错误:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createGame = async () => {
+    setCreatingGame(true);
+    try {
+      // 生成4位随机目标数字
+      const targetNumber = Array.from({ length: 4 }, () => 
+        Math.floor(Math.random() * 10)
+      ).join('');
+
+      const { data, error } = await supabase
+        .from('games')
+        .insert([{
+          name: `${currentUser.username}的游戏`,
+          player1_id: currentUser.id,
+          target_number: targetNumber,
+          status: 'waiting'
+        }])
+        .select('*, player1:users!player1_id(*)')
+        .single();
+
+      if (!error && data) {
+        onGameStart(data);
+      }
+    } catch (error) {
+      console.error('创建游戏错误:', error);
+    } finally {
+      setCreatingGame(false);
+    }
+  };
+
+  const joinGame = async (game: Game) => {
+    try {
+      const { data, error } = await supabase
+        .from('games')
+        .update({
+          player2_id: currentUser.id,
+          status: 'playing',
+          current_player_id: game.player1_id,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', game.id)
+        .select('*, player1:users!player1_id(*), player2:users!player2_id(*)')
+        .single();
+
+      if (!error && data) {
+        onGameStart(data);
+      }
+    } catch (error) {
+      console.error('加入游戏错误:', error);
+    }
+  };
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* 创建游戏区域 */}
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-xl font-semibold mb-4">创建新游戏</h2>
+        <button
+          onClick={createGame}
+          disabled={creatingGame}
+          className="w-full bg-blue-500 text-white py-3 px-4 rounded-lg hover:bg-blue-600 disabled:opacity-50"
+        >
+          {creatingGame ? '创建中...' : '创建游戏房间'}
+        </button>
+        
+        <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+          <h3 className="font-semibold text-blue-800 mb-2">游戏规则</h3>
+          <ul className="text-sm text-blue-700 space-y-1">
+            <li>• 创建游戏后生成4位随机数字</li>
+            <li>• 等待好友加入开始游戏</li>
+            <li>• 轮流猜测数字，显示正确数字个数</li>
+            <li>• 先猜中全部4个数字者获胜</li>
+          </ul>
+        </div>
+      </div>
+
+      {/* 等待加入的游戏 */}
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-xl font-semibold mb-4">可加入的游戏</h2>
+        
+        {loading ? (
+          <p className="text-gray-600">加载中...</p>
+        ) : waitingGames.length === 0 ? (
+          <p className="text-gray-600">暂无等待中的游戏</p>
+        ) : (
+          <div className="space-y-3">
+            {waitingGames.map((game) => (
+              <div key={game.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div>
+                  <p className="font-medium">{game.name}</p>
+                  <p className="text-sm text-gray-600">
+                    创建者: {game.player1?.username}
+                  </p>
+                </div>
+                <button
+                  onClick={() => joinGame(game)}
+                  className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+                >
+                  加入游戏
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 好友列表 */}
+      <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-xl font-semibold mb-4">好友列表</h2>
+        
+        {friends.length === 0 ? (
+          <p className="text-gray-600">暂无好友</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {friends.map((friend) => (
+              <div key={friend.id} className="flex items-center p-3 bg-gray-50 rounded-lg">
+                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                  {friend.username.charAt(0).toUpperCase()}
+                </div>
+                <div className="ml-3">
+                  <p className="font-medium">{friend.username}</p>
+                  <p className="text-sm text-gray-600">{friend.email}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

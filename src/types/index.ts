@@ -37,3 +37,39 @@ export interface Message {
     username: string;
   };
 }
+
+export interface Game {
+  id: string;
+  name: string;
+  status: 'waiting' | 'playing' | 'completed' | 'cancelled';
+  player1_id: string;
+  player2_id?: string;
+  target_number: string;
+  current_player_id?: string;
+  winner_id?: string;
+  created_at: string;
+  updated_at: string;
+  player1?: User;
+  player2?: User;
+  current_player?: User;
+  winner?: User;
+}
+
+export interface GameRound {
+  id: string;
+  game_id: string;
+  player_id: string;
+  guess_number: string;
+  correct_count: number;
+  created_at: string;
+  player?: User;
+}
+
+export interface GameChat {
+  id: string;
+  game_id: string;
+  player_id: string;
+  message: string;
+  created_at: string;
+  player?: User;
+}

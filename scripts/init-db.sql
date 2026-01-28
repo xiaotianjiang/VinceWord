@@ -40,12 +40,50 @@ CREATE TABLE IF NOT EXISTS messages (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- 创建比赛表
+CREATE TABLE IF NOT EXISTS games (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  status TEXT DEFAULT 'waiting' CHECK (status IN ('waiting', 'playing', 'completed', 'cancelled')),
+  player1_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  player2_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  target_number TEXT NOT NULL,
+  current_player_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  winner_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 创建游戏回合表
+CREATE TABLE IF NOT EXISTS game_rounds (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  game_id UUID REFERENCES games(id) ON DELETE CASCADE,
+  player_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  guess_number TEXT NOT NULL,
+  correct_count INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 创建游戏聊天表
+CREATE TABLE IF NOT EXISTS game_chats (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  game_id UUID REFERENCES games(id) ON DELETE CASCADE,
+  player_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  message TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- 创建索引
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender_id);
 CREATE INDEX IF NOT EXISTS idx_messages_receiver ON messages(receiver_id);
 CREATE INDEX IF NOT EXISTS idx_messages_created ON messages(created_at);
+CREATE INDEX IF NOT EXISTS idx_games_player1 ON games(player1_id);
+CREATE INDEX IF NOT EXISTS idx_games_player2 ON games(player2_id);
+CREATE INDEX IF NOT EXISTS idx_games_status ON games(status);
+CREATE INDEX IF NOT EXISTS idx_game_rounds_game ON game_rounds(game_id);
+CREATE INDEX IF NOT EXISTS idx_game_chats_game ON game_chats(game_id);
 
 -- 插入默认菜单
 INSERT INTO menus (name, path, icon, seq) VALUES 
@@ -53,8 +91,9 @@ INSERT INTO menus (name, path, icon, seq) VALUES
 ('聊天', '/chat', 'message-square', 2),
 ('世界聊天', '/chat/global', 'globe', 3),
 ('好友聊天', '/chat/friends', 'users', 4),
-('用户管理', '/admin/users', 'user-cog', 5),
-('菜单管理', '/admin/menus', 'menu', 6)
+('我发4', '/game', 'gamepad', 5),
+('用户管理', '/admin/users', 'user-cog', 6),
+('菜单管理', '/admin/menus', 'menu', 7)
 ON CONFLICT DO NOTHING;
 
 -- 创建管理员账号（密码：admin123）

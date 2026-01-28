@@ -41,6 +41,12 @@ export default function Home() {
                 >
                   开始聊天
                 </Link>
+                <Link
+                  href="/game"
+                  className="inline-block ml-4 bg-purple-500 text-white px-6 py-3 rounded-lg hover:bg-purple-600 transition-colors"
+                >
+                  玩我发4
+                </Link>
                 {user.role === 'admin' && (
                   <Link
                     href="/admin"

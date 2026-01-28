@@ -32,6 +32,9 @@ export default function Navigation() {
                 <Link href="/chat" className="text-gray-600 hover:text-gray-800">
                   聊天
                 </Link>
+                <Link href="/game" className="text-gray-600 hover:text-gray-800">
+                  我发4
+                </Link>
                 {currentUser.role === 'admin' && (
                   <Link href="/admin" className="text-gray-600 hover:text-gray-800">
                     管理
@@ -89,6 +92,9 @@ export default function Navigation() {
                 <>
                   <Link href="/chat" className="block py-2 text-gray-600 hover:text-gray-800">
                     聊天
+                  </Link>
+                  <Link href="/game" className="block py-2 text-gray-600 hover:text-gray-800">
+                    我发4
                   </Link>
                   {currentUser.role === 'admin' && (
                     <Link href="/admin" className="block py-2 text-gray-600 hover:text-gray-800">
