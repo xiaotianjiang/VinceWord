@@ -1,7 +1,0 @@
-{
-  "/not-found": "app/not-found.js",
-  "/login/page": "app/login/page.js",
-  "/chat/global/page": "app/chat/global/page.js",
-  "/chat/friends/page": "app/chat/friends/page.js",
-  "/chat/page": "app/chat/page.js"
-}
