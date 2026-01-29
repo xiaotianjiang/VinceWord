@@ -28,7 +28,7 @@ export default function GamePage() {
         .from('games')
         .select('*, player1:users!player1_id(*), player2:users!player2_id(*)')
         .or(`player1_id.eq.${userId},player2_id.eq.${userId}`)
-        .in('status', ['waiting', 'playing'])
+        .in('status', ['waiting', 'preparing', 'playing'])
         .order('created_at', { ascending: false })
         .limit(1);
 

@@ -10,13 +10,18 @@ interface GameRoomProps {
   onGameEnd: () => void;
 }
 
-export default function GameRoom({ game, currentUser, onGameEnd }: GameRoomProps) {
+export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: GameRoomProps) {
+  const [game, setGame] = useState(initialGame);
   const [guess, setGuess] = useState('');
   const [rounds, setRounds] = useState<GameRound[]>([]);
   const [chats, setChats] = useState<GameChat[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [isMyTurn, setIsMyTurn] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+  const [myNumber, setMyNumber] = useState('');
+  const [currentGameStartIndex, setCurrentGameStartIndex] = useState(0);
+  const [bubbles, setBubbles] = useState<Array<{id: number, text: string, x: number, y: number, color: string}>>([]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -24,18 +29,46 @@ export default function GameRoom({ game, currentUser, onGameEnd }: GameRoomProps
     };
     
     loadData();
-    const cleanup = setupRealtimeSubscription();
     
-    return cleanup;
+    // 设置轮询定时器，每隔1秒更新一次数据
+    const pollInterval = setInterval(loadGameData, 1000);
+    
+    return () => {
+      clearInterval(pollInterval);
+    };
   }, [game.id]);
 
-  useEffect(() => {
-    // 检查是否轮到自己
-    setIsMyTurn(game.current_player_id === currentUser.id && game.status === 'playing');
-  }, [game, currentUser]);
+
 
   const loadGameData = async () => {
     try {
+      // 加载最新游戏状态
+      const { data: gameData, error: gameError } = await supabase
+        .from('games')
+        .select('*')
+        .eq('id', game.id)
+        .single();
+
+      if (!gameError && gameData) {
+        setGame(prev => ({ ...prev, ...gameData }));
+        setIsMyTurn(gameData.current_player_id === currentUser.id && gameData.status === 'playing');
+        
+        // 检查准备状态
+        if (gameData.status === 'preparing') {
+          const hasNumber = gameData.player1_id === currentUser.id 
+            ? gameData.player1_number 
+            : gameData.player2_number;
+          setIsReady(!!hasNumber);
+        }
+        
+        // 更新本地数字状态（任何阶段）
+        if (gameData.player1_id === currentUser.id && gameData.player1_number) {
+          setMyNumber(gameData.player1_number);
+        } else if (gameData.player2_id === currentUser.id && gameData.player2_number) {
+          setMyNumber(gameData.player2_number);
+        }
+      }
+
       // 加载游戏回合记录
       const { data: roundsData, error: roundsError } = await supabase
         .from('game_rounds')
@@ -45,6 +78,10 @@ export default function GameRoom({ game, currentUser, onGameEnd }: GameRoomProps
 
       if (!roundsError && roundsData) {
         setRounds(roundsData);
+        // 如果是新游戏，设置起始索引
+        if (gameData.status === 'preparing' && currentGameStartIndex === 0 && roundsData.length > 0) {
+          setCurrentGameStartIndex(roundsData.length);
+        }
       }
 
       // 加载游戏聊天记录
@@ -62,92 +99,7 @@ export default function GameRoom({ game, currentUser, onGameEnd }: GameRoomProps
     }
   };
 
-  const setupRealtimeSubscription = () => {
-    // 订阅游戏回合更新
-    const roundsSubscription = supabase
-      .channel('game-rounds')
-      .on('postgres_changes', 
-        { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'game_rounds',
-          filter: `game_id=eq.${game.id}`
-        }, 
-        (payload) => {
-          // 获取新回合的完整数据
-          supabase
-            .from('game_rounds')
-            .select('*, player:users(*)')
-            .eq('id', payload.new.id)
-            .single()
-            .then(({ data }) => {
-              if (data) {
-                setRounds(prev => [...prev, data]);
-                // 检查游戏是否结束
-                if (data.correct_count === 4) {
-                  endGame(data.player_id);
-                } else {
-                  switchTurn();
-                }
-              }
-            });
-        }
-      )
-      .subscribe();
 
-    // 订阅游戏状态更新
-    const gameSubscription = supabase
-      .channel('game-status')
-      .on('postgres_changes', 
-        { 
-          event: 'UPDATE', 
-          schema: 'public', 
-          table: 'games',
-          filter: `id=eq.${game.id}`
-        }, 
-        (payload) => {
-          const updatedGame = payload.new;
-          setIsMyTurn(updatedGame.current_player_id === currentUser.id && updatedGame.status === 'playing');
-          
-          if (updatedGame.status === 'completed') {
-            // 游戏结束，可以显示结果
-          }
-        }
-      )
-      .subscribe();
-
-    // 订阅游戏聊天
-    const chatSubscription = supabase
-      .channel('game-chats')
-      .on('postgres_changes', 
-        { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'game_chats',
-          filter: `game_id=eq.${game.id}`
-        }, 
-        (payload) => {
-          // 获取新消息的完整数据
-          supabase
-            .from('game_chats')
-            .select('*, player:users(*)')
-            .eq('id', payload.new.id)
-            .single()
-            .then(({ data }) => {
-              if (data) {
-                setChats(prev => [...prev, data]);
-              }
-            });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      roundsSubscription.unsubscribe();
-      gameSubscription.unsubscribe();
-      chatSubscription.unsubscribe();
-    };
-  };
 
   const makeGuess = async () => {
     if (!guess || guess.length !== 4 || !/^\d{4}$/.test(guess)) {
@@ -157,8 +109,18 @@ export default function GameRoom({ game, currentUser, onGameEnd }: GameRoomProps
 
     setLoading(true);
     try {
+      // 获取对手的数字
+      const opponentNumber = game.player1_id === currentUser.id 
+        ? game.player2_number 
+        : game.player1_number;
+
+      if (!opponentNumber) {
+        alert('对手尚未设置数字');
+        return;
+      }
+
       // 计算正确数字个数
-      const correctCount = calculateCorrectCount(guess, game.target_number);
+      const correctCount = calculateCorrectCount(guess, opponentNumber);
 
       // 记录回合
       const { data, error } = await supabase
@@ -176,6 +138,24 @@ export default function GameRoom({ game, currentUser, onGameEnd }: GameRoomProps
         console.error('记录回合错误:', error);
       } else {
         setGuess('');
+        // 立即更新回合记录
+        setRounds(prev => [...prev, data]);
+        
+        // 如果猜中4个正确数字，结束游戏
+        if (data && data.correct_count === 4) {
+          await endGame(currentUser.id);
+          const totalRounds = Math.max(0, rounds.length - currentGameStartIndex) + 1; // 只计算当前游戏的轮数
+          alert(`恭喜！你猜中了对手的数字！\n游戏结束，你获胜！\n总共进行了 ${totalRounds} 轮猜测\n你的答案: ${guess}\n正确答案: ${opponentNumber}`);
+        } else {
+          // 转换回合（除非游戏结束）
+          await switchTurn();
+        }
+        
+        // 强制状态更新以确保界面刷新
+        setTimeout(() => {
+          setLoading(prev => !prev);
+          setLoading(prev => !prev);
+        }, 100);
       }
     } catch (error) {
       console.error('猜测错误:', error);
@@ -204,6 +184,10 @@ export default function GameRoom({ game, currentUser, onGameEnd }: GameRoomProps
         updated_at: new Date().toISOString()
       })
       .eq('id', game.id);
+    
+    // 立即更新本地状态
+    setGame(prev => ({ ...prev, current_player_id: nextPlayerId }));
+    setIsMyTurn(nextPlayerId === currentUser.id && game.status === 'playing');
   };
 
   const endGame = async (winnerId: string) => {
@@ -215,6 +199,93 @@ export default function GameRoom({ game, currentUser, onGameEnd }: GameRoomProps
         updated_at: new Date().toISOString()
       })
       .eq('id', game.id);
+  };
+
+  const restartGame = async () => {
+    try {
+      // 重置游戏状态为准备中，清空数字但保留回合记录
+      await supabase
+        .from('games')
+        .update({
+          status: 'preparing',
+          player1_number: null,
+          player2_number: null,
+          current_player_id: null,
+          winner_id: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', game.id);
+      
+      // 重置本地状态
+      setIsReady(false);
+      setMyNumber('');
+      setGuess('');
+      setIsMyTurn(false);
+      // 设置当前游戏的起始回合索引为当前回合数
+      setCurrentGameStartIndex(rounds.length);
+      
+      // 重新加载游戏数据
+      await loadGameData();
+    } catch (error) {
+      console.error('重新开始游戏错误:', error);
+    }
+  };
+
+  const markReady = async () => {
+    try {
+      // 弹出输入框让用户输入4位数字
+      const number = prompt('请输入你的4位数字：');
+      if (!number || number.length !== 4 || !/^\d{4}$/.test(number)) {
+        alert('请输入有效的4位数字');
+        return;
+      }
+
+      // 保存到本地状态
+      setMyNumber(number);
+
+      // 更新当前玩家的数字
+      if (game.player1_id === currentUser.id) {
+        await supabase
+          .from('games')
+          .update({
+            player1_number: number
+          })
+          .eq('id', game.id);
+      } else if (game.player2_id === currentUser.id) {
+        await supabase
+          .from('games')
+          .update({
+            player2_number: number
+          })
+          .eq('id', game.id);
+      }
+      
+      setIsReady(true);
+      
+      // 检查是否双方都准备好了
+      const { data: updatedGame } = await supabase
+        .from('games')
+        .select('player1_number, player2_number')
+        .eq('id', game.id)
+        .single();
+      
+      if (updatedGame && updatedGame.player1_number && updatedGame.player2_number) {
+        // 随机选择先手玩家
+        const firstPlayerId = Math.random() > 0.5 ? game.player1_id : game.player2_id;
+        
+        await supabase
+          .from('games')
+          .update({
+            status: 'playing',
+            current_player_id: firstPlayerId,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', game.id);
+      }
+    } catch (error) {
+      console.error('准备错误:', error);
+      setIsReady(false);
+    }
   };
 
   const sendMessage = async () => {
@@ -253,8 +324,53 @@ export default function GameRoom({ game, currentUser, onGameEnd }: GameRoomProps
     return game.player1_id === currentUser.id ? game.player2 : game.player1;
   };
 
+  const createBubble = (e: React.MouseEvent, text: string) => {
+    const id = Date.now();
+    // 生成随机颜色
+    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#F9A826', '#6C5CE7', '#FD79A8', '#00B894', '#E17055'];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    
+    const newBubble = {
+      id,
+      text,
+      x: e.clientX,
+      y: e.clientY,
+      color: randomColor
+    };
+    
+    setBubbles(prev => [...prev, newBubble]);
+    
+    // 3秒后自动移除气泡
+    setTimeout(() => {
+      setBubbles(prev => prev.filter(bubble => bubble.id !== id));
+    }, 2000);
+  };
+
+  const handleContainerClick = (e: React.MouseEvent) => {
+    // 只有邮箱是 admin@vinceword.com 的用户才能触发气泡
+    if (currentUser.email === 'Gino@vinceword.com') {
+      const texts = ['哥哥好棒啊!', '帅爆了哥哥', '哥哥真厉害!', '哥哥太强了!', '来嘛来嘛', '冲!', '😗', '我想你了！', '爱你！', '亲亲！', 'Gino哥！', '哥哥，我想你了！', ''];
+      const randomText = texts[Math.floor(Math.random() * texts.length)];
+      createBubble(e, randomText);
+    }
+  };
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" onClick={handleContainerClick}>
+      {/* 气泡效果 */}
+      {bubbles.map(bubble => (
+        <div
+          key={bubble.id}
+          className="bubble"
+          style={{
+            left: bubble.x,
+            top: bubble.y,
+            color: bubble.color
+          }}
+        >
+          {bubble.text}
+        </div>
+      ))}
       {/* 游戏信息区域 */}
       <div className="lg:col-span-1 bg-white p-6 rounded-lg shadow-md">
         <h2 className="text-xl font-semibold mb-4">游戏信息</h2>
@@ -281,9 +397,33 @@ export default function GameRoom({ game, currentUser, onGameEnd }: GameRoomProps
               {game.current_player_id === currentUser.id ? '你的回合' : '对手回合'}
             </p>
           </div>
+          
+          {/* 显示自己输入的数字 */}
+          {myNumber && (
+            <div>
+              <p className="text-sm text-gray-600">你的数字</p>
+              <p className="font-medium text-green-600">{myNumber}</p>
+            </div>
+          )}
         </div>
 
-        {isMyTurn && (
+        {game.status === 'preparing' && (
+          <div className="bg-yellow-50 p-4 rounded-lg mb-4">
+            <h3 className="font-semibold text-yellow-800 mb-3">准备阶段</h3>
+            <p className="text-sm text-yellow-700 mb-3">
+              等待双方准备...
+            </p>
+            <button
+              onClick={markReady}
+              disabled={isReady}
+              className="w-full bg-yellow-500 text-black py-2 px-4 rounded-lg hover:bg-yellow-600 disabled:opacity-50"
+            >
+              {isReady ? '已准备' : '准备开始'}
+            </button>
+          </div>
+        )}
+
+        {isMyTurn && game.status === 'playing' && !game.winner_id && (
           <div className="bg-blue-50 p-4 rounded-lg mb-4">
             <h3 className="font-semibold text-blue-800 mb-3">你的回合</h3>
             <div className="flex gap-2">
@@ -298,7 +438,7 @@ export default function GameRoom({ game, currentUser, onGameEnd }: GameRoomProps
               <button
                 onClick={makeGuess}
                 disabled={loading || guess.length !== 4}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50"
+                className="bg-blue-500 text-black px-4 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50"
               >
                 {loading ? '提交中...' : '提交'}
               </button>
@@ -306,9 +446,33 @@ export default function GameRoom({ game, currentUser, onGameEnd }: GameRoomProps
           </div>
         )}
 
+        {game.status === 'completed' && (
+          <div className="bg-green-50 p-4 rounded-lg mb-4">
+            <h3 className="font-semibold text-green-800 mb-3">游戏结束</h3>
+            <p className="text-sm text-green-700 mb-2">
+              {game.winner_id === currentUser.id ? '🎉 恭喜你获胜！' : '🤖 对手获胜了！'}
+            </p>
+            <p className="text-sm text-green-700 mb-2">
+              总共进行了 {Math.max(0, rounds.length - currentGameStartIndex)} 轮猜测
+            </p>
+            <p className="text-sm text-green-700 mb-2">
+              你的数字: {myNumber || '未设置'}
+            </p>
+            <p className="text-sm text-green-700 mb-3">
+              对手数字: {game.player1_id === currentUser.id ? game.player2_number || '未知' : game.player1_number || '未知'}
+            </p>
+            <button
+              onClick={restartGame}
+              className="w-full bg-green-500 text-black py-2 px-4 rounded-lg hover:bg-green-600 mb-2"
+            >
+              开始新的一轮
+            </button>
+          </div>
+        )}
+
         <button
           onClick={leaveGame}
-          className="w-full bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600"
+          className="w-full bg-red-500 text-black py-2 px-4 rounded-lg hover:bg-red-600"
         >
           离开游戏
         </button>
@@ -322,22 +486,41 @@ export default function GameRoom({ game, currentUser, onGameEnd }: GameRoomProps
           <p className="text-gray-600">暂无游戏记录</p>
         ) : (
           <div className="space-y-2 max-h-96 overflow-y-auto">
-            {rounds.map((round) => (
-              <div key={round.id} className="p-3 bg-gray-50 rounded-lg">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">{round.player?.username}</span>
-                  <span className="text-sm text-gray-600">
-                    {new Date(round.created_at).toLocaleTimeString()}
-                  </span>
+            {rounds.map((round, index) => {
+              const isMyRound = round.player_id === currentUser.id;
+              // 一问一答为一个回合，从当前游戏的起始索引开始计算
+              // 只显示当前游戏的回合，忽略之前的记录
+              if (index < currentGameStartIndex) {
+                return null;
+              }
+              const roundNumber = Math.floor((index - currentGameStartIndex) / 2) + 1;
+              
+              return (
+                <div 
+                  key={round.id} 
+                  className={`p-3 rounded-lg ${
+                    isMyRound 
+                      ? 'bg-blue-50 ml-auto w-5/6'  // 自己的信息在右侧，蓝色背景
+                      : 'bg-gray-50 mr-auto w-5/6'  // 对手的信息在左侧，灰色背景
+                  }`}
+                >
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">
+                      第{roundNumber}回合 - {round.player?.username}
+                    </span>
+                    <span className="text-sm text-gray-600">
+                      {new Date(round.created_at).toLocaleTimeString()}
+                    </span>
+                  </div>
+                  <div className={`mt-1 ${isMyRound ? 'text-right' : 'text-left'}`}>
+                    <span className="text-gray-700">猜测: {round.guess_number}</span>
+                    <span className="ml-3 text-green-600 font-semibold">
+                      正确: {round.correct_count}/4
+                    </span>
+                  </div>
                 </div>
-                <div className="mt-1">
-                  <span className="text-gray-700">猜测: {round.guess_number}</span>
-                  <span className="ml-3 text-green-600 font-semibold">
-                    正确: {round.correct_count}/4
-                  </span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -377,7 +560,7 @@ export default function GameRoom({ game, currentUser, onGameEnd }: GameRoomProps
           />
           <button
             onClick={sendMessage}
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+            className="bg-blue-500 text-black px-4 py-2 rounded-lg hover:bg-blue-600"
           >
             发送
           </button>

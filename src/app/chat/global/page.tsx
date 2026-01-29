@@ -132,7 +132,7 @@ export default function GlobalChat() {
                 <div key={message.id} className="mb-4">
                   <div className="flex items-start space-x-3">
                     <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                      <span className="text-white text-sm font-bold">
+                      <span className="text-black text-sm font-bold">
                         {message.sender?.username?.charAt(0).toUpperCase() || 'U'}
                       </span>
                     </div>
@@ -169,7 +169,7 @@ export default function GlobalChat() {
                 type="button"
                 onClick={sendMessage}
                 disabled={loading || !newMessage.trim()}
-                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                className="px-4 py-2 bg-blue-500 text-black rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
               >
                 {loading ? '发送中...' : '发送'}
               </button>

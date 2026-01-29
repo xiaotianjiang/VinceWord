@@ -50,7 +50,7 @@ export default function TestLogin() {
           
           <button
             onClick={handleTest}
-            className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+            className="w-full bg-blue-500 text-black py-2 px-4 rounded hover:bg-blue-600"
           >
             测试登录
           </button>

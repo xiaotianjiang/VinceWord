@@ -63,17 +63,11 @@ export default function GameLobby({ currentUser, onGameStart }: GameLobbyProps) 
   const createGame = async () => {
     setCreatingGame(true);
     try {
-      // 生成4位随机目标数字
-      const targetNumber = Array.from({ length: 4 }, () => 
-        Math.floor(Math.random() * 10)
-      ).join('');
-
       const { data, error } = await supabase
         .from('games')
         .insert([{
           name: `${currentUser.username}的游戏`,
           player1_id: currentUser.id,
-          target_number: targetNumber,
           status: 'waiting'
         }])
         .select('*, player1:users!player1_id(*)')
@@ -95,8 +89,7 @@ export default function GameLobby({ currentUser, onGameStart }: GameLobbyProps) 
         .from('games')
         .update({
           player2_id: currentUser.id,
-          status: 'playing',
-          current_player_id: game.player1_id,
+          status: 'preparing',
           updated_at: new Date().toISOString()
         })
         .eq('id', game.id)
@@ -116,10 +109,11 @@ export default function GameLobby({ currentUser, onGameStart }: GameLobbyProps) 
       {/* 创建游戏区域 */}
       <div className="bg-white p-6 rounded-lg shadow-md">
         <h2 className="text-xl font-semibold mb-4">创建新游戏</h2>
+        
         <button
           onClick={createGame}
           disabled={creatingGame}
-          className="w-full bg-blue-500 text-white py-3 px-4 rounded-lg hover:bg-blue-600 disabled:opacity-50"
+          className="w-full bg-blue-500 text-black py-3 px-4 rounded-lg hover:bg-blue-600 disabled:opacity-50"
         >
           {creatingGame ? '创建中...' : '创建游戏房间'}
         </button>
@@ -155,7 +149,7 @@ export default function GameLobby({ currentUser, onGameStart }: GameLobbyProps) 
                 </div>
                 <button
                   onClick={() => joinGame(game)}
-                  className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+                  className="bg-green-500 text-black px-4 py-2 rounded-lg hover:bg-green-600"
                 >
                   加入游戏
                 </button>
@@ -175,7 +169,7 @@ export default function GameLobby({ currentUser, onGameStart }: GameLobbyProps) 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {friends.map((friend) => (
               <div key={friend.id} className="flex items-center p-3 bg-gray-50 rounded-lg">
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-black text-sm font-bold">
                   {friend.username.charAt(0).toUpperCase()}
                 </div>
                 <div className="ml-3">

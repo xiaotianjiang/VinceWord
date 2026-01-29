@@ -37,20 +37,20 @@ export default function Home() {
               <div className="space-y-4">
                 <Link
                   href="/chat"
-                  className="inline-block bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors"
+                  className="inline-block bg-blue-500 text-black px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors"
                 >
                   开始聊天
                 </Link>
                 <Link
                   href="/game"
-                  className="inline-block ml-4 bg-purple-500 text-white px-6 py-3 rounded-lg hover:bg-purple-600 transition-colors"
+                  className="inline-block ml-4 bg-purple-500 text-black px-6 py-3 rounded-lg hover:bg-purple-600 transition-colors"
                 >
                   玩我发4
                 </Link>
                 {user.role === 'admin' && (
                   <Link
                     href="/admin"
-                    className="inline-block ml-4 bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors"
+                    className="inline-block ml-4 bg-gray-500 text-black px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors"
                   >
                     管理后台
                   </Link>
@@ -65,13 +65,13 @@ export default function Home() {
               <div className="space-x-4">
                 <Link
                   href="/login"
-                  className="inline-block bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors"
+                  className="inline-block bg-blue-500 text-black px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors"
                 >
                   登录
                 </Link>
                 <Link
                   href="/register"
-                  className="inline-block bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors"
+                  className="inline-block bg-green-500 text-black px-6 py-3 rounded-lg hover:bg-green-600 transition-colors"
                 >
                   注册
                 </Link>

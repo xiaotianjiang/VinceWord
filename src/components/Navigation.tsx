@@ -48,7 +48,7 @@ export default function Navigation() {
                 <span className="text-gray-600">欢迎, {currentUser.username}</span>
                 <Link 
                   href="/logout" 
-                  className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                  className="bg-red-500 text-black px-3 py-1 rounded hover:bg-red-600"
                 >
                   登出
                 </Link>
@@ -60,7 +60,7 @@ export default function Navigation() {
                 </Link>
                 <Link 
                   href="/register" 
-                  className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+                  className="bg-blue-500 text-black px-3 py-1 rounded hover:bg-blue-600"
                 >
                   注册
                 </Link>

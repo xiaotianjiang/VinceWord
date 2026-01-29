@@ -41,10 +41,11 @@ export interface Message {
 export interface Game {
   id: string;
   name: string;
-  status: 'waiting' | 'playing' | 'completed' | 'cancelled';
+  status: 'waiting' | 'preparing' | 'playing' | 'completed' | 'cancelled';
   player1_id: string;
   player2_id?: string;
-  target_number: string;
+  player1_number?: string;
+  player2_number?: string;
   current_player_id?: string;
   winner_id?: string;
   created_at: string;

@@ -62,7 +62,7 @@ export default function FriendsChat() {
                 >
                   <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                      <span className="text-white text-sm font-bold">
+                      <span className="text-black text-sm font-bold">
                         {user.username.charAt(0).toUpperCase()}
                       </span>
                     </div>
@@ -82,7 +82,7 @@ export default function FriendsChat() {
                 <div className="p-4 border-b">
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
-                      <span className="text-white font-bold">
+                      <span className="text-black font-bold">
                         {selectedUser.username.charAt(0).toUpperCase()}
                       </span>
                     </div>
@@ -110,7 +110,7 @@ export default function FriendsChat() {
                     />
                     <button
                       type="button"
-                      className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 opacity-50 cursor-not-allowed"
+                      className="px-4 py-2 bg-blue-500 text-black rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 opacity-50 cursor-not-allowed"
                       disabled
                     >
                       发送

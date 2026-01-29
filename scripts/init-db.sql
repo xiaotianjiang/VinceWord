@@ -44,10 +44,11 @@ CREATE TABLE IF NOT EXISTS messages (
 CREATE TABLE IF NOT EXISTS games (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
-  status TEXT DEFAULT 'waiting' CHECK (status IN ('waiting', 'playing', 'completed', 'cancelled')),
+  status TEXT DEFAULT 'waiting' CHECK (status IN ('waiting', 'preparing', 'playing', 'completed', 'cancelled')),
   player1_id UUID REFERENCES users(id) ON DELETE CASCADE,
   player2_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  target_number TEXT NOT NULL,
+  player1_number TEXT,
+  player2_number TEXT,
   current_player_id UUID REFERENCES users(id) ON DELETE CASCADE,
   winner_id UUID REFERENCES users(id) ON DELETE CASCADE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -99,6 +100,12 @@ ON CONFLICT DO NOTHING;
 -- 创建管理员账号（密码：admin123）
 INSERT INTO users (email, username, password_hash, role) VALUES 
 ('admin@vinceword.com', 'admin', '$2b$10$WYzQtcKlhOsn0pM7iS8WFO76irWt1DDGxp4YikM//aQ3g4VsNru/u', 'admin')
+ON CONFLICT (email) DO NOTHING;
+INSERT INTO users (email, username, password_hash, role) VALUES 
+('admin2@vinceword.com', 'admin2', '$2b$10$WYzQtcKlhOsn0pM7iS8WFO76irWt1DDGxp4YikM//aQ3g4VsNru/u', 'admin')
+ON CONFLICT (email) DO NOTHING;
+INSERT INTO users (email, username, password_hash, role) VALUES 
+('Gino@vinceword.com', 'Gino', '$2b$10$WYzQtcKlhOsn0pM7iS8WFO76irWt1DDGxp4YikM//aQ3g4VsNru/u', 'admin')
 ON CONFLICT (email) DO NOTHING;
 
 -- 给管理员分配所有菜单权限
