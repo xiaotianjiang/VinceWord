@@ -349,7 +349,7 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
   const handleContainerClick = (e: React.MouseEvent) => {
     // 只有邮箱是 admin@vinceword.com 的用户才能触发气泡
     if (currentUser.email === 'Gino@vinceword.com') {
-      const texts = ['哥哥好棒啊!', '帅爆了哥哥', '哥哥真厉害!', '哥哥太强了!', '来嘛来嘛', '冲!', '😗', '我想你了！', '爱你！', '亲亲！', 'Gino哥！', '哥哥，我想你了！', ''];
+      const texts = ['我发4，我是最喜欢你的!', '哥哥好棒啊!', '帅爆了哥哥', '哥哥真厉害!', '哥哥太强了!', '来嘛来嘛', '冲!', '😗', '我想你了！', '爱你！', '亲亲！', 'Gino哥！', '哥哥，我想你了！', ''];
       const randomText = texts[Math.floor(Math.random() * texts.length)];
       createBubble(e, randomText);
     }
