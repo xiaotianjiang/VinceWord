@@ -444,7 +444,7 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
                 disabled={loading || guess.length !== 4}
                 className="bg-blue-500 text-black px-4 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50"
               >
-                {loading ? '提交中...' : '提交'}
+                {loading ? '提交中' : '提交'}
               </button>
             </div>
           </div>
@@ -511,10 +511,10 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
               return (
                 <div className="space-y-2">
                   {/* 表头 */}
-                  <div className="grid grid-cols-13 gap-1 text-xs font-semibold text-gray-600 pb-2 border-b">
-                    <div className="col-span-3 bg-blue-100 p-1 rounded border border-blue-200">回合</div>
-                    <div className="col-span-5 bg-red-100 p-1 rounded border border-red-200">对手</div>
-                    <div className="col-span-5 bg-green-100 p-1 rounded border border-green-200">自己</div>
+                  <div className="grid grid-cols-12 gap-1 text-xs font-semibold text-gray-600 pb-2 border-b">
+                    <div className="col-span-4 bg-blue-100 p-1 rounded border border-blue-200">回合</div>
+                    <div className="col-span-4 bg-red-100 p-1 rounded border border-red-200">对手</div>
+                    <div className="col-span-4 bg-green-100 p-1 rounded border border-green-200">自己</div>
                   </div>
                   
                   {/* 数据行 */}
@@ -524,14 +524,14 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
                     const myRound = roundData.find(round => round.player_id === currentUser.id);
                     
                     return (
-                      <div key={roundNumber} className="grid grid-cols-13 gap-1 text-sm py-1 hover:bg-gray-50 rounded">
+                      <div key={roundNumber} className="grid grid-cols-12 gap-1 text-sm py-1 hover:bg-gray-50 rounded">
                         {/* 回合号 */}
-                        <div className="col-span-3 font-medium text-blue-800 flex items-center bg-blue-50 p-1 rounded border border-blue-100">
+                        <div className="col-span-4 font-medium text-blue-800 flex items-center bg-blue-50 p-1 rounded border border-blue-100">
                           第{roundNumber}回
                         </div>
                         
                         {/* 对手数据  */}
-                        <div className="col-span-5 bg-red-50 p-1 rounded border border-red-100">
+                        <div className="col-span-4 bg-red-50 p-1 rounded border border-red-100">
                           {opponentRound ? (
                             <div className="flex items-center justify-between gap-2">
                               <span className="text-red-700 font-medium">{opponentRound.guess_number}</span>
@@ -543,7 +543,7 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
                         </div>
                         
                         {/* 自己数据 */}
-                        <div className="col-span-5 bg-green-50 p-1 rounded border border-green-100">
+                        <div className="col-span-4 bg-green-50 p-1 rounded border border-green-100">
                           {myRound ? (
                             <div className="flex items-center justify-between gap-2">
                               <span className="text-blue-700 font-medium">{myRound.guess_number}</span>
