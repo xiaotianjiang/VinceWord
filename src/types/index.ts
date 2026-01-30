@@ -62,6 +62,7 @@ export interface GameRound {
   player_id: string;
   guess_number: string;
   correct_count: number;
+  round_number: number;
   created_at: string;
   player?: User;
 }

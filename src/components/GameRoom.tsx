@@ -530,7 +530,7 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
                           第{roundNumber}回
                         </div>
                         
-                        {/* 对手数据 */}
+                        {/* 对手数据  */}
                         <div className="col-span-5 bg-red-50 p-1 rounded border border-red-100">
                           {opponentRound ? (
                             <div className="flex items-center justify-between gap-2">
