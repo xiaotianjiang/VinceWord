@@ -122,6 +122,9 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
       // 计算正确数字个数
       const correctCount = calculateCorrectCount(guess, opponentNumber);
 
+      // 计算当前回合数（每两个记录为一个完整回合）
+      const currentRoundNumber = Math.floor((rounds.length - currentGameStartIndex) / 2) + 1;
+
       // 记录回合
       const { data, error } = await supabase
         .from('game_rounds')
@@ -129,7 +132,8 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
           game_id: game.id,
           player_id: currentUser.id,
           guess_number: guess,
-          correct_count: correctCount
+          correct_count: correctCount,
+          round_number: currentRoundNumber
         }])
         .select('*, player:users(*)')
         .single();
@@ -349,7 +353,7 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
   const handleContainerClick = (e: React.MouseEvent) => {
     // 只有邮箱是 admin@vinceword.com 的用户才能触发气泡
     if (currentUser.email === 'Gino@vinceword.com') {
-      const texts = ['我发4，我是最喜欢你的!', '哥哥好棒啊!', '帅爆了哥哥', '哥哥真厉害!', '哥哥太强了!', '来嘛来嘛', '冲!', '😗', '我想你了！', '爱你！', '亲亲！', 'Gino哥！', '哥哥，我想你了！', ''];
+      const texts = ['我发4，我是最喜欢你的!', '哥哥好棒啊!', '帅爆了哥哥', '❤❤❤', '哥哥真厉害!', '哥哥太强了!', '来嘛来嘛', '冲!', '😗', '我想你了！', '爱你哟！', '亲亲你！', 'Love Gino哥！', '哥哥，我想你了！', '😘', '🎉', '想了你好多次！', ''];
       const randomText = texts[Math.floor(Math.random() * texts.length)];
       createBubble(e, randomText);
     }
@@ -485,42 +489,76 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
         {rounds.length === 0 ? (
           <p className="text-gray-600">暂无游戏记录</p>
         ) : (
-          <div className="space-y-2 max-h-96 overflow-y-auto">
-            {rounds.map((round, index) => {
-              const isMyRound = round.player_id === currentUser.id;
-              // 一问一答为一个回合，从当前游戏的起始索引开始计算
-              // 只显示当前游戏的回合，忽略之前的记录
-              if (index < currentGameStartIndex) {
-                return null;
-              }
-              const roundNumber = Math.floor((index - currentGameStartIndex) / 2) + 1;
+          <div className="max-h-96 overflow-y-auto">
+            {/* 按回合分组显示 - 紧凑表格布局 */}
+            {(() => {
+              const currentGameRounds = rounds.filter((_, index) => index >= currentGameStartIndex);
+              const groupedRounds: {[key: number]: GameRound[]} = {};
+              
+              currentGameRounds.forEach(round => {
+                const roundNum = round.round_number || 1;
+                if (!groupedRounds[roundNum]) {
+                  groupedRounds[roundNum] = [];
+                }
+                groupedRounds[roundNum].push(round);
+              });
+              
+              // 按回合数倒序排列
+              const sortedRoundNumbers = Object.keys(groupedRounds)
+                .map(Number)
+                .sort((a, b) => b - a);
               
               return (
-                <div 
-                  key={round.id} 
-                  className={`p-3 rounded-lg ${
-                    isMyRound 
-                      ? 'bg-blue-50 ml-auto w-5/6'  // 自己的信息在右侧，蓝色背景
-                      : 'bg-gray-50 mr-auto w-5/6'  // 对手的信息在左侧，灰色背景
-                  }`}
-                >
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">
-                      第{roundNumber}回合 - {round.player?.username}
-                    </span>
-                    <span className="text-sm text-gray-600">
-                      {new Date(round.created_at).toLocaleTimeString()}
-                    </span>
+                <div className="space-y-2">
+                  {/* 表头 */}
+                  <div className="grid grid-cols-12 gap-1 text-xs font-semibold text-gray-600 pb-2 border-b">
+                    <div className="col-span-2 bg-blue-100 p-1 rounded border border-blue-200">回合</div>
+                    <div className="col-span-5 bg-red-100 p-1 rounded border border-red-200">对手</div>
+                    <div className="col-span-5 bg-green-100 p-1 rounded border border-green-200">自己</div>
                   </div>
-                  <div className={`mt-1 ${isMyRound ? 'text-right' : 'text-left'}`}>
-                    <span className="text-gray-700">猜测: {round.guess_number}</span>
-                    <span className="ml-3 text-green-600 font-semibold">
-                      正确: {round.correct_count}/4
-                    </span>
-                  </div>
+                  
+                  {/* 数据行 */}
+                  {sortedRoundNumbers.map(roundNumber => {
+                    const roundData = groupedRounds[roundNumber];
+                    const opponentRound = roundData.find(round => round.player_id !== currentUser.id);
+                    const myRound = roundData.find(round => round.player_id === currentUser.id);
+                    
+                    return (
+                      <div key={roundNumber} className="grid grid-cols-12 gap-1 text-sm py-1 hover:bg-gray-50 rounded">
+                        {/* 回合号 */}
+                        <div className="col-span-2 font-medium text-blue-800 flex items-center bg-blue-50 p-1 rounded border border-blue-100">
+                          第{roundNumber}回
+                        </div>
+                        
+                        {/* 对手数据 */}
+                        <div className="col-span-5 bg-red-50 p-1 rounded border border-red-100">
+                          {opponentRound ? (
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-red-700 font-medium">{opponentRound.guess_number}</span>
+                              <span className="text-green-700 text-xs bg-green-100 px-1 rounded border border-green-200 font-bold">✓{opponentRound.correct_count}</span>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 text-xs">-</span>
+                          )}
+                        </div>
+                        
+                        {/* 自己数据 */}
+                        <div className="col-span-5 bg-green-50 p-1 rounded border border-green-100">
+                          {myRound ? (
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-blue-700 font-medium">{myRound.guess_number}</span>
+                              <span className="text-green-700 text-xs bg-green-100 px-1 rounded border border-green-200 font-bold">✓{myRound.correct_count}</span>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 text-xs">-</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               );
-            })}
+            })()}
           </div>
         )}
       </div>

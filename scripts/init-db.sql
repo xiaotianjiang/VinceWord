@@ -62,6 +62,7 @@ CREATE TABLE IF NOT EXISTS game_rounds (
   player_id UUID REFERENCES users(id) ON DELETE CASCADE,
   guess_number TEXT NOT NULL,
   correct_count INTEGER NOT NULL DEFAULT 0,
+  round_number INTEGER NOT NULL DEFAULT 1,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
