@@ -148,7 +148,7 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
         // 如果猜中4个正确数字，结束游戏
         if (data && data.correct_count === 4) {
           await endGame(currentUser.id);
-          const totalRounds = Math.max(0, rounds.length - currentGameStartIndex) + 1; // 只计算当前游戏的轮数
+          const totalRounds = Math.max(0, rounds.reduce((acc, cur) => acc > cur.round_number ? acc : cur.round_number, -Infinity))
           alert(`恭喜！你猜中了对手的数字！\n游戏结束，你获胜！\n总共进行了 ${totalRounds} 轮猜测\n你的答案: ${guess}\n正确答案: ${opponentNumber}`);
         } else {
           // 转换回合（除非游戏结束）
@@ -457,7 +457,7 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
               {game.winner_id === currentUser.id ? '🎉 恭喜你获胜！' : '🤖 对手获胜了！'}
             </p>
             <p className="text-sm text-green-700 mb-2">
-              总共进行了 {Math.max(0, rounds.length - currentGameStartIndex)} 轮猜测
+              总共进行了 {Math.max(0, rounds.reduce((acc, cur) => acc > cur.round_number ? acc : cur.round_number, -Infinity))} 轮猜测
             </p>
             <p className="text-sm text-green-700 mb-2">
               你的数字: {myNumber || '未设置'}
@@ -538,7 +538,7 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
                               <span className="text-green-700 text-xs bg-green-100 px-1 rounded border border-green-200 font-bold">✓{opponentRound.correct_count}</span>
                             </div>
                           ) : (
-                            <span className="text-gray-400 text-xs">-</span>
+                            <span className="text-gray-400 text-xs">思考中...</span>
                           )}
                         </div>
                         
