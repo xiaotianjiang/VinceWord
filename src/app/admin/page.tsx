@@ -3,17 +3,27 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { User } from '@/types';
+import { getCurrentUser } from '@/lib/session';
 
 export default function Admin() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    const userStr = localStorage.getItem('currentUser');
-    if (userStr) {
-      const user = JSON.parse(userStr);
-      setCurrentUser(user);
-    }
+    setIsClient(true);
+    const user = getCurrentUser();
+    setCurrentUser(user);
   }, []);
+
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg text-gray-600">加载中...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!currentUser) {
     return (

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { User, Game } from '@/types';
+import { getCurrentUser } from '@/lib/session';
 import GameLobby from '@/components/GameLobby';
 import GameRoom from '@/components/GameRoom';
 
@@ -10,11 +11,12 @@ export default function GamePage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentGame, setCurrentGame] = useState<Game | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    const userStr = localStorage.getItem('currentUser');
-    if (userStr) {
-      const user = JSON.parse(userStr);
+    setIsClient(true);
+    const user = getCurrentUser();
+    if (user) {
       setCurrentUser(user);
       loadCurrentGame(user.id);
     } else {

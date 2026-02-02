@@ -1,10 +1,14 @@
 -- 创建用户表
 CREATE TABLE IF NOT EXISTS users (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  email TEXT UNIQUE NOT NULL,
+  usercode TEXT UNIQUE NOT NULL,
+  email TEXT UNIQUE,
   username TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
   role TEXT DEFAULT 'user' CHECK (role IN ('admin', 'user')),
+  total_games INTEGER DEFAULT 0,
+  wins INTEGER DEFAULT 0,
+  total_rounds INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -78,6 +82,7 @@ CREATE TABLE IF NOT EXISTS game_chats (
 -- 创建索引
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+CREATE INDEX IF NOT EXISTS idx_users_usercode ON users(usercode);
 CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender_id);
 CREATE INDEX IF NOT EXISTS idx_messages_receiver ON messages(receiver_id);
 CREATE INDEX IF NOT EXISTS idx_messages_created ON messages(created_at);
@@ -99,15 +104,12 @@ INSERT INTO menus (name, path, icon, seq) VALUES
 ON CONFLICT DO NOTHING;
 
 -- 创建管理员账号（密码：admin123）
-INSERT INTO users (email, username, password_hash, role) VALUES 
-('admin@vinceword.com', 'admin', '$2b$10$WYzQtcKlhOsn0pM7iS8WFO76irWt1DDGxp4YikM//aQ3g4VsNru/u', 'admin')
-ON CONFLICT (email) DO NOTHING;
-INSERT INTO users (email, username, password_hash, role) VALUES 
-('admin2@vinceword.com', 'admin2', '$2b$10$WYzQtcKlhOsn0pM7iS8WFO76irWt1DDGxp4YikM//aQ3g4VsNru/u', 'admin')
-ON CONFLICT (email) DO NOTHING;
-INSERT INTO users (email, username, password_hash, role) VALUES 
-('Gino@vinceword.com', 'Gino', '$2b$10$WYzQtcKlhOsn0pM7iS8WFO76irWt1DDGxp4YikM//aQ3g4VsNru/u', 'admin')
-ON CONFLICT (email) DO NOTHING;
+INSERT INTO users (usercode, email, username, password_hash, role) VALUES 
+('admin', 'admin@vinceword.com', 'admin', '$2b$10$WYzQtcKlhOsn0pM7iS8WFO76irWt1DDGxp4YikM//aQ3g4VsNru/u', 'admin')
+ON CONFLICT (usercode) DO NOTHING;
+INSERT INTO users (usercode, email, username, password_hash, role) VALUES 
+('Gino', 'Gino@vinceword.com', 'Gino', '$2b$10$WYzQtcKlhOsn0pM7iS8WFO76irWt1DDGxp4YikM//aQ3g4VsNru/u', 'admin')
+ON CONFLICT (usercode) DO NOTHING;
 
 -- 给管理员分配所有菜单权限
 INSERT INTO user_menus (user_id, menu_id)
@@ -116,3 +118,54 @@ SELECT
   id 
 FROM menus
 ON CONFLICT DO NOTHING;
+
+-- 创建更新用户游戏统计的函数
+CREATE OR REPLACE FUNCTION update_user_game_stats()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- 当游戏状态变为 completed 时更新统计
+  IF NEW.status = 'completed' AND OLD.status != 'completed' THEN
+    -- 更新所有参与者的总游戏数
+    IF NEW.player1_id IS NOT NULL THEN
+      UPDATE users 
+      SET total_games = total_games + 1,
+          updated_at = NOW()
+      WHERE id = NEW.player1_id;
+    END IF;
+    
+    IF NEW.player2_id IS NOT NULL THEN
+      UPDATE users 
+      SET total_games = total_games + 1,
+          updated_at = NOW()
+      WHERE id = NEW.player2_id;
+    END IF;
+    
+    -- 更新获胜者的胜场数
+    IF NEW.winner_id IS NOT NULL THEN
+      UPDATE users 
+      SET wins = wins + 1,
+          updated_at = NOW()
+      WHERE id = NEW.winner_id;
+    END IF;
+    
+    -- 更新总回合数
+    UPDATE users u
+    SET total_rounds = total_rounds + (
+      SELECT COUNT(*) 
+      FROM game_rounds 
+      WHERE game_id = NEW.id
+    ),
+    updated_at = NOW()
+    WHERE u.id IN (NEW.player1_id, NEW.player2_id);
+  END IF;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 创建触发器
+DROP TRIGGER IF EXISTS update_game_stats_trigger ON games;
+CREATE TRIGGER update_game_stats_trigger
+  AFTER UPDATE ON games
+  FOR EACH ROW
+  EXECUTE FUNCTION update_user_game_stats();

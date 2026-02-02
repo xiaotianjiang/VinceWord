@@ -3,19 +3,20 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { User, Message } from '@/types';
+import { getCurrentUser } from '@/lib/session';
 
 export default function GlobalChat() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const userStr = localStorage.getItem('currentUser');
-    if (userStr) {
-      setCurrentUser(JSON.parse(userStr));
-    }
+    setIsClient(true);
+    const user = getCurrentUser();
+    setCurrentUser(user);
   }, []);
 
   useEffect(() => {
@@ -102,6 +103,16 @@ export default function GlobalChat() {
       sendMessage();
     }
   };
+
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg text-gray-600">加载中...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!currentUser) {
     return (

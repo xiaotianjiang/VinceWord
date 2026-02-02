@@ -3,16 +3,18 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { User } from '@/types';
+import { getCurrentUser } from '@/lib/session';
 
 export default function FriendsChat() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    const userStr = localStorage.getItem('currentUser');
-    if (userStr) {
-      const user = JSON.parse(userStr);
+    setIsClient(true);
+    const user = getCurrentUser();
+    if (user) {
       setCurrentUser(user);
       loadUsers(user.id);
     }
@@ -29,6 +31,16 @@ export default function FriendsChat() {
       setUsers(data);
     }
   };
+
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg text-gray-600">加载中...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!currentUser) {
     return (
@@ -68,7 +80,7 @@ export default function FriendsChat() {
                     </div>
                     <div>
                       <p className="font-medium text-gray-800">{user.username}</p>
-                      <p className="text-xs text-gray-500">{user.email}</p>
+                      <p className="text-xs text-gray-500">{user.email || '未设置邮箱'}</p>
                     </div>
                   </div>
                 </div>
@@ -88,7 +100,7 @@ export default function FriendsChat() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-gray-800">{selectedUser.username}</h3>
-                      <p className="text-sm text-gray-500">{selectedUser.email}</p>
+                      <p className="text-sm text-gray-500">{selectedUser.email || '未设置邮箱'}</p>
                     </div>
                   </div>
                 </div>

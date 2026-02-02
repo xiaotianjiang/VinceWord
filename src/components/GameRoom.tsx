@@ -30,26 +30,128 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
     
     loadData();
     
-    // 设置轮询定时器，每隔1秒更新一次数据
-    const pollInterval = setInterval(loadGameData, 1000);
+    // 设置 Supabase 实时订阅
+    const gamesSubscription = supabase
+      .channel('game-changes')
+      .on('postgres_changes', 
+        { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'games',
+          filter: `id=eq.${game.id}`
+        }, 
+        async (payload) => {
+          console.log('游戏状态更新:', payload.new);
+          
+          // 重新加载完整的游戏数据（包括玩家信息）
+          await loadGameData();
+          
+          const updatedGame = payload.new as Game;
+          setIsMyTurn(updatedGame.current_player_id === currentUser.id && updatedGame.status === 'playing');
+          
+          // 检查准备状态
+          if (updatedGame.status === 'preparing') {
+            const hasNumber = updatedGame.player1_id === currentUser.id 
+              ? updatedGame.player1_number 
+              : updatedGame.player2_number;
+            setIsReady(!!hasNumber);
+          }
+          
+          // 更新本地数字状态
+          if (updatedGame.player1_id === currentUser.id && updatedGame.player1_number) {
+            setMyNumber(updatedGame.player1_number);
+          } else if (updatedGame.player2_id === currentUser.id && updatedGame.player2_number) {
+            setMyNumber(updatedGame.player2_number);
+          }
+        }
+      )
+      .subscribe();
+
+    const roundsSubscription = supabase
+      .channel('rounds-changes')
+      .on('postgres_changes', 
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'game_rounds',
+          filter: `game_id=eq.${game.id}`
+        }, 
+        async (payload) => {
+          console.log('新回合记录:', payload.new);
+          // 获取完整的回合数据（包含用户信息）
+          const { data: roundWithUser } = await supabase
+            .from('game_rounds')
+            .select('*, player:users(*)')
+            .eq('id', payload.new.id)
+            .single();
+          
+          if (roundWithUser) {
+            setRounds(prev => [...prev, roundWithUser]);
+          }
+        }
+      )
+      .subscribe();
+
+    const chatsSubscription = supabase
+      .channel('chats-changes')
+      .on('postgres_changes', 
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'game_chats',
+          filter: `game_id=eq.${game.id}`
+        }, 
+        async (payload) => {
+          console.log('新聊天消息:', payload.new);
+          // 获取完整的聊天数据（包含用户信息）
+          const { data: chatWithUser } = await supabase
+            .from('game_chats')
+            .select('*, player:users(*)')
+            .eq('id', payload.new.id)
+            .single();
+          
+          if (chatWithUser) {
+            setChats(prev => [...prev, chatWithUser]);
+          }
+        }
+      )
+      .subscribe();
     
     return () => {
-      clearInterval(pollInterval);
+      // 清理订阅
+      gamesSubscription.unsubscribe();
+      roundsSubscription.unsubscribe();
+      chatsSubscription.unsubscribe();
     };
-  }, [game.id]);
+  }, [game.id, currentUser.id]);
 
 
 
   const loadGameData = async () => {
     try {
-      // 加载最新游戏状态
-      const { data: gameData, error: gameError } = await supabase
-        .from('games')
-        .select('*')
-        .eq('id', game.id)
-        .single();
+      // 初始加载所有数据
+      const [gamesResult, roundsResult, chatsResult] = await Promise.all([
+        supabase
+          .from('games')
+          .select('*, player1:users!player1_id(*), player2:users!player2_id(*)')
+          .eq('id', game.id)
+          .single(),
+        
+        supabase
+          .from('game_rounds')
+          .select('*, player:users(*)')
+          .eq('game_id', game.id)
+          .order('created_at', { ascending: true }),
+        
+        supabase
+          .from('game_chats')
+          .select('*, player:users(*)')
+          .eq('game_id', game.id)
+          .order('created_at', { ascending: true })
+      ]);
 
-      if (!gameError && gameData) {
+      if (!gamesResult.error && gamesResult.data) {
+        const gameData = gamesResult.data;
         setGame(prev => ({ ...prev, ...gameData }));
         setIsMyTurn(gameData.current_player_id === currentUser.id && gameData.status === 'playing');
         
@@ -61,7 +163,7 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
           setIsReady(!!hasNumber);
         }
         
-        // 更新本地数字状态（任何阶段）
+        // 更新本地数字状态
         if (gameData.player1_id === currentUser.id && gameData.player1_number) {
           setMyNumber(gameData.player1_number);
         } else if (gameData.player2_id === currentUser.id && gameData.player2_number) {
@@ -69,30 +171,16 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
         }
       }
 
-      // 加载游戏回合记录
-      const { data: roundsData, error: roundsError } = await supabase
-        .from('game_rounds')
-        .select('*, player:users(*)')
-        .eq('game_id', game.id)
-        .order('created_at', { ascending: true });
-
-      if (!roundsError && roundsData) {
-        setRounds(roundsData);
+      if (!roundsResult.error && roundsResult.data) {
+        setRounds(roundsResult.data);
         // 如果是新游戏，设置起始索引
-        if (gameData.status === 'preparing' && currentGameStartIndex === 0 && roundsData.length > 0) {
-          setCurrentGameStartIndex(roundsData.length);
+        if (gamesResult.data?.status === 'preparing' && currentGameStartIndex === 0 && roundsResult.data.length > 0) {
+          setCurrentGameStartIndex(roundsResult.data.length);
         }
       }
 
-      // 加载游戏聊天记录
-      const { data: chatsData, error: chatsError } = await supabase
-        .from('game_chats')
-        .select('*, player:users(*)')
-        .eq('game_id', game.id)
-        .order('created_at', { ascending: true });
-
-      if (!chatsError && chatsData) {
-        setChats(chatsData);
+      if (!chatsResult.error && chatsResult.data) {
+        setChats(chatsResult.data);
       }
     } catch (error) {
       console.error('加载游戏数据错误:', error);
@@ -142,24 +230,15 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
         console.error('记录回合错误:', error);
       } else {
         setGuess('');
-        // 立即更新回合记录
-        setRounds(prev => [...prev, data]);
         
         // 如果猜中4个正确数字，结束游戏
         if (data && data.correct_count === 4) {
           await endGame(currentUser.id);
-          const totalRounds = Math.max(0, rounds.reduce((acc, cur) => acc > cur.round_number ? acc : cur.round_number, -Infinity))
-          alert(`恭喜！你猜中了对手的数字！\n游戏结束，你获胜！\n总共进行了 ${totalRounds} 轮猜测\n你的答案: ${guess}\n正确答案: ${opponentNumber}`);
+          // 不再显示alert，让用户在UI上看到结果
         } else {
           // 转换回合（除非游戏结束）
           await switchTurn();
         }
-        
-        // 强制状态更新以确保界面刷新
-        setTimeout(() => {
-          setLoading(prev => !prev);
-          setLoading(prev => !prev);
-        }, 100);
       }
     } catch (error) {
       console.error('猜测错误:', error);
@@ -188,14 +267,10 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
         updated_at: new Date().toISOString()
       })
       .eq('id', game.id);
-    
-    // 立即更新本地状态
-    setGame(prev => ({ ...prev, current_player_id: nextPlayerId }));
-    setIsMyTurn(nextPlayerId === currentUser.id && game.status === 'playing');
   };
 
   const endGame = async (winnerId: string) => {
-    await supabase
+    const { error } = await supabase
       .from('games')
       .update({
         status: 'completed',
@@ -203,12 +278,35 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
         updated_at: new Date().toISOString()
       })
       .eq('id', game.id);
+    
+    if (!error) {
+      // 给数据库触发器一点时间更新统计信息
+      setTimeout(() => {
+        // 重新加载游戏数据以获取更新后的统计信息
+        loadGameData();
+      }, 1000);
+    }
   };
 
   const restartGame = async () => {
     try {
-      // 重置游戏状态为准备中，清空数字但保留回合记录
-      await supabase
+      // 暂停实时订阅以避免旧数据干扰
+      const cleanupSubscriptions = () => {
+        // 这里需要保存和恢复订阅状态，但为了简化，我们直接重新加载数据
+      };
+      
+      // 清空当前游戏的回合记录
+      const { error: deleteError } = await supabase
+        .from('game_rounds')
+        .delete()
+        .eq('game_id', game.id);
+      
+      if (deleteError) {
+        console.error('删除回合记录错误:', deleteError);
+      }
+      
+      // 重置游戏状态为准备中，清空数字
+      const { error: updateError } = await supabase
         .from('games')
         .update({
           status: 'preparing',
@@ -220,16 +318,27 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
         })
         .eq('id', game.id);
       
-      // 重置本地状态
-      setIsReady(false);
-      setMyNumber('');
+      if (updateError) {
+        console.error('更新游戏状态错误:', updateError);
+      }
+      
+      // 完全重置本地状态
+      setRounds([]);
+      setCurrentGameStartIndex(0);
       setGuess('');
       setIsMyTurn(false);
-      // 设置当前游戏的起始回合索引为当前回合数
-      setCurrentGameStartIndex(rounds.length);
+      setIsReady(false);
+      setMyNumber('');
       
-      // 重新加载游戏数据
-      await loadGameData();
+      // 清除聊天记录（可选）
+      // await supabase.from('game_chats').delete().eq('game_id', game.id);
+      // setChats([]);
+      
+      // 给数据库一点时间处理，然后重新加载游戏数据
+      setTimeout(async () => {
+        await loadGameData();
+      }, 500);
+      
     } catch (error) {
       console.error('重新开始游戏错误:', error);
     }
@@ -274,6 +383,16 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
         .single();
       
       if (updatedGame && updatedGame.player1_number && updatedGame.player2_number) {
+        // 清空之前的回合记录（游戏开始时重置）
+        await supabase
+          .from('game_rounds')
+          .delete()
+          .eq('game_id', game.id);
+        
+        // 重置本地回合状态
+        setRounds([]);
+        setCurrentGameStartIndex(0);
+        
         // 随机选择先手玩家
         const firstPlayerId = Math.random() > 0.5 ? game.player1_id : game.player2_id;
         
@@ -328,6 +447,30 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
     return game.player1_id === currentUser.id ? game.player2 : game.player1;
   };
 
+  const renderPlayerStats = (player: User | undefined, label: string) => {
+    if (!player) return null;
+    
+    const totalGames = player.total_games || 0;
+    const wins = player.wins || 0;
+    const winRate = totalGames > 0 ? ((wins / totalGames) * 100).toFixed(1) : 0;
+    
+    return (
+      <div className="bg-gray-50 p-3 rounded-lg">
+        <p className="text-sm font-medium text-gray-800 mb-2">{label}</p>
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="text-gray-600">游戏数:</div>
+          <div className="font-medium">{totalGames}</div>
+          
+          <div className="text-gray-600">胜场:</div>
+          <div className="font-medium text-green-600">{wins}</div>
+          
+          <div className="text-gray-600">胜率:</div>
+          <div className="font-medium">{winRate}%</div>
+        </div>
+      </div>
+    );
+  };
+
   const createBubble = (e: React.MouseEvent, text: string) => {
     const id = Date.now();
     // 生成随机颜色
@@ -376,8 +519,16 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
         </div>
       ))}
       {/* 游戏信息区域 */}
-      <div className="lg:col-span-1 bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold mb-4">游戏信息</h2>
+      <div className="lg:col-span-1 bg-white p-6 rounded-lg shadow-md relative">
+        {/* 离开游戏按钮 - 顶部左上角 */}
+        <button
+          onClick={leaveGame}
+          className="absolute top-4 left-4 bg-red-500 text-black py-1 px-3 rounded-lg hover:bg-red-600 opacity-70 hover:opacity-100 transition-opacity text-sm"
+        >
+          离开游戏
+        </button>
+        
+        <h2 className="text-xl font-semibold mb-4 text-center">游戏信息</h2>
         
         <div className="space-y-3 mb-6">
           <div>
@@ -401,6 +552,17 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
               {game.current_player_id === currentUser.id ? '你的回合' : '对手回合'}
             </p>
           </div>
+          
+          {/* 双方战绩显示 */}
+          {game.player1 && game.player2 && (
+            <div className="pt-4 border-t border-gray-200">
+              <p className="text-sm font-medium text-gray-800 mb-2">玩家战绩</p>
+              <div className="grid grid-cols-2 gap-3">
+                {renderPlayerStats(game.player1, game.player1.username)}
+                {renderPlayerStats(game.player2, game.player2.username)}
+              </div>
+            </div>
+          )}
           
           {/* 显示自己输入的数字 */}
           {myNumber && (
@@ -465,21 +627,24 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
             <p className="text-sm text-green-700 mb-3">
               对手数字: {game.player1_id === currentUser.id ? game.player2_number || '未知' : game.player1_number || '未知'}
             </p>
-            <button
-              onClick={restartGame}
-              className="w-full bg-green-500 text-black py-2 px-4 rounded-lg hover:bg-green-600 mb-2"
-            >
-              开始新的一轮
-            </button>
+            <div className="space-y-2">
+              <button
+                onClick={restartGame}
+                className="w-full bg-green-500 text-black py-2 px-4 rounded-lg hover:bg-green-600"
+              >
+                开始新的一轮
+              </button>
+              <button
+                onClick={onGameEnd}
+                className="w-full bg-gray-500 text-black py-2 px-4 rounded-lg hover:bg-gray-600"
+              >
+                返回大厅
+              </button>
+            </div>
           </div>
         )}
 
-        <button
-          onClick={leaveGame}
-          className="w-full bg-red-500 text-black py-2 px-4 rounded-lg hover:bg-red-600"
-        >
-          离开游戏
-        </button>
+
       </div>
 
       {/* 游戏记录区域 */}

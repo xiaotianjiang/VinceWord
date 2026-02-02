@@ -1,9 +1,13 @@
 export interface User {
   id: string;
-  email: string;
+  usercode: string;
+  email?: string;
   username: string;
   password_hash: string;
   role: 'admin' | 'user';
+  total_games?: number;
+  wins?: number;
+  total_rounds?: number;
   created_at: string;
   updated_at: string;
 }

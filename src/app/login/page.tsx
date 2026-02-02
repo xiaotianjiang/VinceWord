@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { loginUser, setCurrentUser } from '@/lib/auth';
 
 export default function Login() {
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,12 +18,12 @@ export default function Login() {
     setError('');
 
     try {
-      const user = await loginUser(email, password);
+      const user = await loginUser(identifier, password);
       if (user) {
         setCurrentUser(user);
         router.push('/');
       } else {
-        setError('邮箱或密码错误');
+        setError('账号或密码错误');
       }
     } catch (err) {
       setError('登录失败，请重试');
@@ -47,15 +47,16 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              邮箱
+            <label htmlFor="identifier" className="block text-sm font-medium text-gray-700">
+              账号或邮箱
             </label>
             <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              id="identifier"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900" 
+              placeholder="输入账号名或邮箱地址"
               required
             />
           </div>

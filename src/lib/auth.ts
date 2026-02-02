@@ -10,15 +10,51 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return await bcrypt.compare(password, hash);
 }
 
-export async function registerUser(email: string, username: string, password: string): Promise<User | null> {
+export async function registerUser(usercode: string, email: string, username: string, password: string): Promise<User | null> {
   try {
+    // 检查usercode是否已存在
+    const { data: existingUserCode } = await supabase
+      .from('users')
+      .select('usercode')
+      .eq('usercode', usercode)
+      .single();
+
+    if (existingUserCode) {
+      throw new Error('账号名已存在');
+    }
+
+    // 检查username是否已存在
+    const { data: existingUsername } = await supabase
+      .from('users')
+      .select('username')
+      .eq('username', username)
+      .single();
+
+    if (existingUsername) {
+      throw new Error('用户名已存在');
+    }
+
+    // 如果邮箱不为空，检查邮箱是否已存在
+    if (email) {
+      const { data: existingEmail } = await supabase
+        .from('users')
+        .select('email')
+        .eq('email', email)
+        .single();
+
+      if (existingEmail) {
+        throw new Error('邮箱已存在');
+      }
+    }
+
     const passwordHash = await hashPassword(password);
     
     const { data, error } = await supabase
       .from('users')
       .insert([
         { 
-          email, 
+          usercode,
+          email: email || null, 
           username, 
           password_hash: passwordHash,
           role: 'user'
@@ -35,17 +71,26 @@ export async function registerUser(email: string, username: string, password: st
     return data;
   } catch (error) {
     console.error('注册异常:', error);
-    return null;
+    throw error; // 抛出错误以便页面层处理具体错误信息
   }
 }
 
-export async function loginUser(email: string, password: string): Promise<User | null> {
+export async function loginUser(identifier: string, password: string): Promise<User | null> {
   try {
-    const { data: user, error } = await supabase
+    // 判断identifier是邮箱还是账号
+    const isEmail = identifier.includes('@');
+    
+    let query = supabase
       .from('users')
-      .select('*')
-      .eq('email', email)
-      .single();
+      .select('*');
+    
+    if (isEmail) {
+      query = query.eq('email', identifier);
+    } else {
+      query = query.eq('usercode', identifier);
+    }
+    
+    const { data: user, error } = await query.single();
 
     if (error || !user) {
       console.error('用户不存在:', error);

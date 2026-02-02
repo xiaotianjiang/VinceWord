@@ -3,20 +3,22 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { User } from '@/types';
+import { getCurrentUser } from '@/lib/session';
 
 export default function UserManagement() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    const userStr = localStorage.getItem('currentUser');
-    if (userStr) {
-      const user = JSON.parse(userStr);
-      setCurrentUser(user);
-      if (user.role === 'admin') {
-        loadUsers();
-      }
+    setIsClient(true);
+    const user = getCurrentUser();
+    setCurrentUser(user);
+    if (user?.role === 'admin') {
+      loadUsers();
+    } else {
+      setLoading(false);
     }
   }, []);
 
@@ -53,6 +55,16 @@ export default function UserManagement() {
       console.error('更新用户角色错误:', error);
     }
   };
+
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg text-gray-600">加载中...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!currentUser) {
     return (
@@ -130,7 +142,7 @@ export default function UserManagement() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {user.email}
+                      {user.email || '未设置'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 text-xs font-semibold rounded-full ${

@@ -7,6 +7,7 @@ import { registerUser } from '@/lib/auth';
 
 export default function Register() {
   const [formData, setFormData] = useState({
+    usercode: '',
     email: '',
     username: '',
     password: '',
@@ -41,15 +42,15 @@ export default function Register() {
     }
 
     try {
-      const user = await registerUser(formData.email, formData.username, formData.password);
+      const user = await registerUser(formData.usercode, formData.email, formData.username, formData.password);
       if (user) {
         // 注册成功，跳转到登录页面
         router.push('/login?registered=true');
       } else {
-        setError('注册失败，邮箱或用户名可能已被使用');
+        setError('注册失败，请重试');
       }
-    } catch (err) {
-      setError('注册失败，请重试');
+    } catch (err: any) {
+      setError(err.message || '注册失败，请重试');
     } finally {
       setLoading(false);
     }
@@ -70,6 +71,21 @@ export default function Register() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
+            <label htmlFor="usercode" className="block text-sm font-medium text-gray-700">
+              账号名 *
+            </label>
+            <input
+              type="text"
+              id="usercode"
+              name="usercode"
+              value={formData.usercode}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+              required
+            />
+          </div>
+
+          <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               邮箱
             </label>
@@ -80,7 +96,7 @@ export default function Register() {
               value={formData.email}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-              required
+              placeholder="选填"
             />
           </div>
 

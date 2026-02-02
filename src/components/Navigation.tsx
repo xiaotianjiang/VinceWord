@@ -1,17 +1,39 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { User } from '@/types';
 import { getCurrentUser } from '@/lib/session';
 
 export default function Navigation() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const eventHandlerRef = useRef<((event: CustomEvent<User | null>) => void) | null>(null);
 
   useEffect(() => {
     const user = getCurrentUser();
     setCurrentUser(user);
+
+    
+    // 清理之前的事件监听器
+    if (eventHandlerRef.current) {
+      window.removeEventListener('userChanged', eventHandlerRef.current);
+    }
+    
+    // 监听用户变化事件
+    const handleUserChanged = (event: CustomEvent<User | null>) => {
+      setCurrentUser(event.detail);
+    };
+    
+    eventHandlerRef.current = handleUserChanged;
+    window.addEventListener('userChanged', handleUserChanged);
+    
+    return () => {
+      if (eventHandlerRef.current) {
+        window.removeEventListener('userChanged', eventHandlerRef.current);
+
+      }
+    };
   }, []);
 
   return (
