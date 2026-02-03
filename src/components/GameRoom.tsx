@@ -193,15 +193,30 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
 
   const loadBubbleTexts = async () => {
     try {
-      // 从数据库加载当前用户的气泡文本
-      const { data, error } = await supabase
+      // 首先查询当前用户的气泡文本
+      const { data: userData, error: userError } = await supabase
         .from('user_bubbles')
         .select('bubble_text')
         .eq('user_id', currentUser.id)
         .order('created_at', { ascending: true });
       
-      if (!error && data) {
-        const texts = data.map(item => item.bubble_text).filter(text => text.trim() !== '');
+      if (!userError && userData && userData.length > 0) {
+        // 如果当前用户有气泡文本，使用用户的文本
+        const texts = userData.map(item => item.bubble_text).filter(text => text.trim() !== '');
+        setBubbleTexts(texts);
+        return;
+      }
+      
+      // 如果当前用户没有气泡文本，查询 user_id 为空的默认气泡文本
+      const { data: defaultData, error: defaultError } = await supabase
+        .from('user_bubbles')
+        .select('bubble_text')
+        .is('user_id', null)
+        .order('created_at', { ascending: true });
+      
+      if (!defaultError && defaultData && defaultData.length > 0) {
+        // 使用默认气泡文本
+        const texts = defaultData.map(item => item.bubble_text).filter(text => text.trim() !== '');
         setBubbleTexts(texts);
       }
     } catch (error) {
