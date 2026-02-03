@@ -232,8 +232,24 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
       // 计算正确数字个数
       const correctCount = calculateCorrectCount(guess, opponentNumber);
 
-      // 计算当前回合数（每两个记录为一个完整回合）
-      const currentRoundNumber = Math.floor(rounds.length / 2) + 1;
+      // 计算当前回合数
+      let currentRoundNumber = 1;
+      if (rounds.length > 0) {
+        // 获取最大的回合数
+        const maxRoundNumber = Math.max(...rounds.map(round => round.round_number || 1));
+        
+        // 检查当前最大回合数是否有两个不同玩家的记录
+        const roundsInMaxRound = rounds.filter(round => round.round_number === maxRoundNumber);
+        const uniquePlayersInRound = new Set(roundsInMaxRound.map(round => round.player_id));
+        
+        if (uniquePlayersInRound.size === 2) {
+          // 两个玩家都完成了这一回合，进入下一回合
+          currentRoundNumber = maxRoundNumber + 1;
+        } else {
+          // 只有一个玩家完成了这一回合，保持当前回合
+          currentRoundNumber = maxRoundNumber;
+        }
+      }
       // 记录回合
       const { data, error } = await supabase
         .from('game_rounds')
