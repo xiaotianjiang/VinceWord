@@ -20,12 +20,13 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
   const [isMyTurn, setIsMyTurn] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [myNumber, setMyNumber] = useState('');
-  const [currentGameStartIndex, setCurrentGameStartIndex] = useState(0);
   const [bubbles, setBubbles] = useState<Array<{id: number, text: string, x: number, y: number, color: string}>>([]);
+  const [bubbleTexts, setBubbleTexts] = useState<string[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
       await loadGameData();
+      await loadBubbleTexts();
     };
     
     loadData();
@@ -48,6 +49,13 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
           
           const updatedGame = payload.new as Game;
           setIsMyTurn(updatedGame.current_player_id === currentUser.id && updatedGame.status === 'playing');
+          
+          // 检查游戏是否被取消
+          if (updatedGame.status === 'cancelled') {
+            // 游戏被取消，自动退出游戏
+            onGameEnd();
+            return;
+          }
           
           // 检查准备状态
           if (updatedGame.status === 'preparing') {
@@ -173,10 +181,6 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
 
       if (!roundsResult.error && roundsResult.data) {
         setRounds(roundsResult.data);
-        // 如果是新游戏，设置起始索引
-        if (gamesResult.data?.status === 'preparing' && currentGameStartIndex === 0 && roundsResult.data.length > 0) {
-          setCurrentGameStartIndex(roundsResult.data.length);
-        }
       }
 
       if (!chatsResult.error && chatsResult.data) {
@@ -184,6 +188,24 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
       }
     } catch (error) {
       console.error('加载游戏数据错误:', error);
+    }
+  };
+
+  const loadBubbleTexts = async () => {
+    try {
+      // 从数据库加载当前用户的气泡文本
+      const { data, error } = await supabase
+        .from('user_bubbles')
+        .select('bubble_text')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: true });
+      
+      if (!error && data) {
+        const texts = data.map(item => item.bubble_text).filter(text => text.trim() !== '');
+        setBubbleTexts(texts);
+      }
+    } catch (error) {
+      console.error('加载气泡文本错误:', error);
     }
   };
 
@@ -211,8 +233,7 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
       const correctCount = calculateCorrectCount(guess, opponentNumber);
 
       // 计算当前回合数（每两个记录为一个完整回合）
-      const currentRoundNumber = Math.floor((rounds.length - currentGameStartIndex) / 2) + 1;
-
+      const currentRoundNumber = Math.floor(rounds.length / 2) + 1;
       // 记录回合
       const { data, error } = await supabase
         .from('game_rounds')
@@ -324,7 +345,6 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
       
       // 完全重置本地状态
       setRounds([]);
-      setCurrentGameStartIndex(0);
       setGuess('');
       setIsMyTurn(false);
       setIsReady(false);
@@ -391,7 +411,6 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
         
         // 重置本地回合状态
         setRounds([]);
-        setCurrentGameStartIndex(0);
         
         // 随机选择先手玩家
         const firstPlayerId = Math.random() > 0.5 ? game.player1_id : game.player2_id;
@@ -430,17 +449,85 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
   };
 
   const leaveGame = async () => {
-    if (game.status === 'playing') {
-      // 如果游戏正在进行，标记为取消
-      await supabase
-        .from('games')
-        .update({
-          status: 'cancelled',
+    try {
+      // 检查是否是房主（创建者）离开
+      const isHostLeaving = game.player1_id === currentUser.id;
+      
+      if (isHostLeaving) {
+        // 房主离开，直接取消整个游戏
+        await supabase
+          .from('games')
+          .update({
+            status: 'cancelled',
+            player1_id: null,
+            player2_id: null,
+            player1_number: null,
+            player2_number: null,
+            current_player_id: null,
+            winner_id: null,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', game.id);
+        
+        // 清空当前游戏的回合记录
+        await supabase
+          .from('game_rounds')
+          .delete()
+          .eq('game_id', game.id);
+        
+      } else {
+        // 普通玩家离开
+        let updateData: any = {
           updated_at: new Date().toISOString()
-        })
-        .eq('id', game.id);
+        };
+        
+        if (game.player1_id === currentUser.id) {
+          updateData.player1_id = null;
+          updateData.player1_number = null;
+        } else if (game.player2_id === currentUser.id) {
+          updateData.player2_id = null;
+          updateData.player2_number = null;
+        }
+        
+        // 检查是否两个玩家都离开了
+        const willBothPlayersLeave = 
+          (game.player1_id === currentUser.id && !game.player2_id) ||
+          (game.player2_id === currentUser.id && !game.player1_id);
+        
+        if (willBothPlayersLeave) {
+          // 两个玩家都离开，取消游戏
+          updateData.status = 'cancelled';
+          updateData.current_player_id = null;
+          updateData.winner_id = null;
+        } else {
+          // 只有一个玩家离开，游戏回到等待状态
+          updateData.status = 'waiting';
+          updateData.current_player_id = null;
+          updateData.winner_id = null;
+          // 清空数字和回合记录，但保留游戏
+          updateData.player1_number = null;
+          updateData.player2_number = null;
+        }
+        
+        await supabase
+          .from('games')
+          .update(updateData)
+          .eq('id', game.id);
+        
+        // 清空当前游戏的回合记录
+        if (willBothPlayersLeave) {
+          await supabase
+            .from('game_rounds')
+            .delete()
+            .eq('game_id', game.id);
+        }
+      }
+      
+      onGameEnd();
+    } catch (error) {
+      console.error('离开游戏错误:', error);
+      onGameEnd(); // 即使出错也调用 onGameEnd
     }
-    onGameEnd();
   };
 
   const getOpponent = () => {
@@ -494,10 +581,8 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
   };
 
   const handleContainerClick = (e: React.MouseEvent) => {
-    // 只有邮箱是 admin@vinceword.com 的用户才能触发气泡
-    if (currentUser.email === 'Gino@vinceword.com') {
-      const texts = ['我发4，我是最喜欢你的!', '哥哥好棒啊!', '帅爆了哥哥', '❤❤❤', '哥哥真厉害!', '哥哥太强了!', '来嘛来嘛', '冲!', '😗', '我想你了！', '爱你哟！', '亲亲你！', 'Love Gino哥！', '哥哥，我想你了！', '😘', '🎉', '想了你好多次！', ''];
-      const randomText = texts[Math.floor(Math.random() * texts.length)];
+    if (bubbleTexts.length > 0) {
+      const randomText = bubbleTexts[Math.floor(Math.random() * bubbleTexts.length)];
       createBubble(e, randomText);
     }
   };
@@ -657,10 +742,9 @@ export default function GameRoom({ game: initialGame, currentUser, onGameEnd }: 
           <div className="max-h-96 overflow-y-auto">
             {/* 按回合分组显示 - 紧凑表格布局 */}
             {(() => {
-              const currentGameRounds = rounds.filter((_, index) => index >= currentGameStartIndex);
               const groupedRounds: {[key: number]: GameRound[]} = {};
               
-              currentGameRounds.forEach(round => {
+              rounds.forEach(round => {
                 const roundNum = round.round_number || 1;
                 if (!groupedRounds[roundNum]) {
                   groupedRounds[roundNum] = [];

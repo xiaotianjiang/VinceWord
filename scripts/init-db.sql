@@ -169,3 +169,39 @@ CREATE TRIGGER update_game_stats_trigger
   AFTER UPDATE ON games
   FOR EACH ROW
   EXECUTE FUNCTION update_user_game_stats();
+
+-- 创建用户气泡信息表
+CREATE TABLE IF NOT EXISTS user_bubbles (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  username TEXT NOT NULL,
+  bubble_text TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 创建索引
+CREATE INDEX IF NOT EXISTS idx_user_bubbles_user ON user_bubbles(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_bubbles_username ON user_bubbles(username);
+
+-- 插入默认气泡信息
+INSERT INTO user_bubbles (user_id, username, bubble_text) VALUES 
+((SELECT id FROM users WHERE email = 'Gino@vinceword.com'), 'Gino', '我发4，我是最喜欢你的!'),
+((SELECT id FROM users WHERE email = 'Gino@vinceword.com'), 'Gino', '哥哥好棒啊!'),
+((SELECT id FROM users WHERE email = 'Gino@vinceword.com'), 'Gino', '帅爆了哥哥'),
+((SELECT id FROM users WHERE email = 'Gino@vinceword.com'), 'Gino', '❤❤❤'),
+((SELECT id FROM users WHERE email = 'Gino@vinceword.com'), 'Gino', '哥哥真厉害!'),
+((SELECT id FROM users WHERE email = 'Gino@vinceword.com'), 'Gino', '哥哥太强了!'),
+((SELECT id FROM users WHERE email = 'Gino@vinceword.com'), 'Gino', '来嘛来嘛'),
+((SELECT id FROM users WHERE email = 'Gino@vinceword.com'), 'Gino', '冲!'),
+((SELECT id FROM users WHERE email = 'Gino@vinceword.com'), 'Gino', '😗'),
+((SELECT id FROM users WHERE email = 'Gino@vinceword.com'), 'Gino', '我想你了！'),
+((SELECT id FROM users WHERE email = 'Gino@vinceword.com'), 'Gino', '爱你哟！'),
+((SELECT id FROM users WHERE email = 'Gino@vinceword.com'), 'Gino', '亲亲你！'),
+((SELECT id FROM users WHERE email = 'Gino@vinceword.com'), 'Gino', 'Love Gino哥！'),
+((SELECT id FROM users WHERE email = 'Gino@vinceword.com'), 'Gino', '哥哥，我想你了！'),
+((SELECT id FROM users WHERE email = 'Gino@vinceword.com'), 'Gino', '😘'),
+((SELECT id FROM users WHERE email = 'Gino@vinceword.com'), 'Gino', '🎉'),
+((SELECT id FROM users WHERE email = 'Gino@vinceword.com'), 'Gino', '想了你好多次！'),
+((SELECT id FROM users WHERE email = 'Gino@vinceword.com'), 'Gino', '')
+ON CONFLICT DO NOTHING;
