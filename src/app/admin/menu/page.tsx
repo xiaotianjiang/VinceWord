@@ -170,17 +170,23 @@ export default function MenuManagementPage() {
   };
 
   // 打开添加菜单模态框
-  const handleAddMenu = (parentMenu?: Menu) => {
+  const handleAddMenu = (parentMenu?: Menu | React.MouseEvent<HTMLButtonElement>) => {
+    // 检查参数类型，如果是MouseEvent，则parentMenu为undefined
+    let menu: Menu | undefined;
+    if (parentMenu && 'id' in parentMenu) {
+      menu = parentMenu;
+    }
+    
     setFormData({
       name: '',
       path: '',
       icon: '',
-      parent_id: parentMenu ? parentMenu.id : null,
+      parent_id: menu ? menu.id : null,
       sort: 0,
       status: 'active',
       access_level: 'use'
     });
-    setSelectedMenu(parentMenu || null);
+    setSelectedMenu(menu || null);
     setActionMessage(null);
     setShowAddModal(true);
   };
