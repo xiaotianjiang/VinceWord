@@ -1,27 +1,36 @@
 {
   "compilerOptions": {
-    "lib": ["dom", "dom.iterable", "es6"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
-    "baseUrl": ".",
+    // ✅ 基础配置（Next.js 推荐）
+    "target": "ES2020",                // 编译目标（Next.js 默认）
+    "lib": ["dom", "dom.iterable", "esnext"], // 支持的库（添加 esnext）
+    "allowJs": true,                   // 允许混合 JS/TS 文件
+    "skipLibCheck": true,              // 跳过声明文件检查（加快编译）
+    "strict": true,                    // 启用所有严格检查（核心）
+    "noEmit": true,                    // 不生成编译输出（由 Next.js 处理）
+    "esModuleInterop": true,           // 兼容 CommonJS 和 ES Modules
+    "module": "ESNext",                // 模块系统（Next.js 推荐）
+    "moduleResolution": "bundler",     // 模块解析策略（适配 Webpack/Vite）
+    "resolveJsonModule": true,         // 允许导入 JSON 文件
+    "isolatedModules": true,           // 确保每个文件可独立编译（Next.js 必需）
+    "jsx": "preserve",                // JSX 保留（React 项目用）
+    "incremental": true,              // 启用增量编译（加快后续编译）
+    "forceConsistentCasingInFileNames": true, // 强制文件名大小写一致
+
+    // ✅ Next.js 专属配置
+    "baseUrl": ".",                    // 解析非相对路径的基准目录
     "paths": {
-      "@/*": ["./src/*"]
-    }
+      "@/*": ["./src/*"]              // 路径别名（需与项目结构匹配）
+    },
+
+    // ✅ 可选：进一步严格化（根据需求启用）
+    // "noImplicitReturns": true,       // 强制函数所有分支都有返回值
+    // "noFallthroughCasesInSwitch": true // 禁止 switch 语句穿透
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "next-env.d.ts",                  // Next.js 类型声明
+    "**/*.ts",                        // 所有 TS 文件
+    "**/*.tsx",                       // 所有 TSX 文件
+    ".next/types/**/*.ts"             // Next.js 内部类型（可选）
+  ],
+  "exclude": ["node_modules"]         // 排除依赖目录
 }
