@@ -6,6 +6,11 @@ import { hashPassword } from '@/lib/password';
 
 export async function POST(request: NextRequest) {
   try {
+    // 检查是否在静态构建环境中
+    if (process.env.NODE_ENV === 'production' && typeof window === 'undefined') {
+      return NextResponse.json({ error: 'API 路由在静态构建时不可用' }, { status: 503 });
+    }
+
     const { usercode, username, email, phone, password, inviteCode, agreeTerms } = await request.json();
 
     if (!usercode || !username || !email || !password || !inviteCode) {

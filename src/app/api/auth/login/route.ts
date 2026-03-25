@@ -6,6 +6,11 @@ import { verifyPassword } from '@/lib/password';
 
 export async function POST(request: NextRequest) {
   try {
+    // 检查是否在静态构建环境中
+    if (process.env.NODE_ENV === 'production' && typeof window === 'undefined') {
+      return NextResponse.json({ error: 'API 路由在静态构建时不可用' }, { status: 503 });
+    }
+
     const { identifier, password, remember } = await request.json();
 
     if (!identifier || !password) {
@@ -121,6 +126,11 @@ export async function POST(request: NextRequest) {
 // 验证token是否有效
 export async function GET(request: NextRequest) {
   try {
+    // 检查是否在静态构建环境中
+    if (process.env.NODE_ENV === 'production' && typeof window === 'undefined') {
+      return NextResponse.json({ error: 'API 路由在静态构建时不可用' }, { status: 503 });
+    }
+
     // 从请求头获取token
     const authHeader = request.headers.get('authorization');
     if (!authHeader) {
