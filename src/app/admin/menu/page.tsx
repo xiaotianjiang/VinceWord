@@ -33,7 +33,7 @@ interface MenuFormData {
   name: string;
   path: string;
   icon: string;
-  parent_id: string;
+  parent_id: string | null;
   sort: number;
   status: string;
   access_level: string;
