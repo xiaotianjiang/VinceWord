@@ -333,7 +333,7 @@ export default function MenuManagementPage() {
   };
 
   // 渲染菜单树状结构
-  const renderMenuTree = (menus: Menu[], parentId: string | null, level: number) => {
+  const renderMenuTree = (menus: Menu[], parentId: string | null, level: number): React.ReactNode => {
     const filteredMenus = menus.filter(menu => menu.parent_id === parentId);
     
     return filteredMenus.map(menu => (
