@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 
 interface Role {
@@ -53,7 +53,7 @@ export default function RoleMenusPage() {
   };
 
   // 获取角色列表
-  const fetchRoles = async () => {
+  const fetchRoles = useCallback(async () => {
     try {
       const token = localStorage.getItem('auth-token');
       if (!token) {
@@ -85,7 +85,7 @@ export default function RoleMenusPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedRole, flattenRoles]);
 
   // 获取菜单列表
   const fetchMenus = async () => {
@@ -226,7 +226,7 @@ export default function RoleMenusPage() {
   useEffect(() => {
     fetchRoles();
     fetchMenus();
-  }, []);
+  }, [fetchRoles]);
 
   // 从URL参数中获取roleId并自动选择角色
   useEffect(() => {

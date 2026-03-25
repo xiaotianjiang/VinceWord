@@ -4,7 +4,7 @@ import { verifyJwt } from '@/lib/jwt';
 import { createOperationLog } from '@/lib/operation-log';
 
 // 更新token状态
-export async function updateTokenStatus(token: string, status: string, reason: string = '状态更新'): Promise<void> {
+async function updateTokenStatus(token: string, status: string, reason: string = '状态更新'): Promise<void> {
   try {
     await supabase
       .from('vw_tokens')

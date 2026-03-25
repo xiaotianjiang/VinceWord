@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 interface Role {
   id: string;
@@ -76,7 +76,7 @@ export default function RoleUsersPage() {
   // 操作消息
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
-  const fetchRoleUsers = async () => {
+  const fetchRoleUsers = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -106,7 +106,7 @@ export default function RoleUsersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, limit, search]);
 
   // 扁平化树状结构的角色数据
   const flattenRoles = (roles: any[]): Role[] => {
@@ -129,7 +129,7 @@ export default function RoleUsersPage() {
     return result;
   };
 
-  const fetchRoles = async () => {
+  const fetchRoles = useCallback(async () => {
     try {
       const token = localStorage.getItem('auth-token');
       if (!token) return;
@@ -149,7 +149,7 @@ export default function RoleUsersPage() {
     } catch (err) {
       console.error('获取角色列表错误:', err);
     }
-  };
+  }, [flattenRoles]);
 
   const fetchUsers = async () => {
     try {
@@ -175,7 +175,7 @@ export default function RoleUsersPage() {
     fetchRoleUsers();
     fetchRoles();
     fetchUsers();
-  }, [page, limit, search]);
+  }, [page, limit, search, fetchRoleUsers, fetchRoles]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);

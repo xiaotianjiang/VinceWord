@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 
 interface Role {
@@ -31,7 +31,7 @@ export default function RolePermissionsPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // 获取角色列表
-  const fetchRoles = async () => {
+  const fetchRoles = useCallback(async () => {
     try {
       const token = localStorage.getItem('auth-token');
       if (!token) {
@@ -61,7 +61,7 @@ export default function RolePermissionsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedRole]);
 
   // 获取菜单列表
   const fetchMenus = async () => {
@@ -197,7 +197,7 @@ export default function RolePermissionsPage() {
   useEffect(() => {
     fetchRoles();
     fetchMenus();
-  }, []);
+  }, [fetchRoles]);
 
   // 从URL参数中获取roleId并自动选择角色
   useEffect(() => {
