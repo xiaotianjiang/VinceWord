@@ -21,11 +21,6 @@ async function updateTokenStatus(token: string, status: string, reason: string =
 
 export async function POST(request: NextRequest) {
   try {
-    // 检查是否在静态构建环境中
-    if (process.env.NODE_ENV === 'production' && typeof window === 'undefined') {
-      return NextResponse.json({ error: 'API 路由在静态构建时不可用' }, { status: 503 });
-    }
-
     // 从请求头获取token
     const authHeader = request.headers.get('authorization');
     if (!authHeader) {
@@ -54,11 +49,6 @@ export async function POST(request: NextRequest) {
 // 管理员强制下线用户
 export async function DELETE(request: NextRequest) {
   try {
-    // 检查是否在静态构建环境中
-    if (process.env.NODE_ENV === 'production' && typeof window === 'undefined') {
-      return NextResponse.json({ error: 'API 路由在静态构建时不可用' }, { status: 503 });
-    }
-
     // 从请求头获取管理员token
     const authHeader = request.headers.get('authorization');
     if (!authHeader) {

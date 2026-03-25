@@ -48,11 +48,6 @@ async function getUserFromRequest(request: NextRequest) {
 // 创建日记
 export async function POST(request: NextRequest) {
   try {
-    // 检查是否在静态构建环境中
-    if (process.env.NODE_ENV === 'production' && typeof window === 'undefined') {
-      return NextResponse.json({ success: false, error: 'API 路由在静态构建时不可用' }, { status: 503 });
-    }
-
     const user = await getUserFromRequest(request);
     if (!user) {
       return NextResponse.json({ error: '请先登录' }, { status: 401 });
@@ -103,11 +98,6 @@ export async function POST(request: NextRequest) {
 // 获取日记列表
 export async function GET(request: NextRequest) {
   try {
-    // 检查是否在静态构建环境中
-    if (process.env.NODE_ENV === 'production' && typeof window === 'undefined') {
-      return NextResponse.json({ success: false, error: 'API 路由在静态构建时不可用' }, { status: 503 });
-    }
-
     const user = await getUserFromRequest(request);
     if (!user) {
       return NextResponse.json({ error: '请先登录' }, { status: 401 });
@@ -176,11 +166,6 @@ export async function GET(request: NextRequest) {
 // 删除日记
 export async function DELETE(request: NextRequest) {
   try {
-    // 检查是否在静态构建环境中
-    if (process.env.NODE_ENV === 'production' && typeof window === 'undefined') {
-      return NextResponse.json({ success: false, error: 'API 路由在静态构建时不可用' }, { status: 503 });
-    }
-
     const user = await getUserFromRequest(request);
     if (!user) {
       return NextResponse.json({ error: '请先登录' }, { status: 401 });
