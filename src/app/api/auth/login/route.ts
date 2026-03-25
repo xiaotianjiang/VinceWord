@@ -6,7 +6,13 @@ import { verifyPassword } from '@/lib/password';
 
 export async function POST(request: NextRequest) {
   try {
-    const { identifier, password, remember } = await request.json();
+    console.log('Login API called');
+    console.log('Environment check - SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'set' : 'not set');
+    
+    const body = await request.json();
+    console.log('Request body received:', { identifier: body.identifier, hasPassword: !!body.password });
+    
+    const { identifier, password, remember } = body;
 
     if (!identifier || !password) {
       return NextResponse.json({ error: '账号和密码不能为空' }, { status: 400 });
@@ -16,6 +22,7 @@ export async function POST(request: NextRequest) {
     let user;
     let authError;
 
+    console.log('Searching user by usercode:', identifier);
     // 尝试通过usercode查找
     ({ data: user, error: authError } = await supabase
       .from('vw_users')
@@ -23,38 +30,38 @@ export async function POST(request: NextRequest) {
       .eq('usercode', identifier)
       .single());
 
+    console.log('Usercode search result:', { found: !!user, error: authError?.message });
+
     // 如果usercode查找失败，尝试通过邮箱查找
     if (authError || !user) {
+      console.log('Searching user by email:', identifier);
       ({ data: user, error: authError } = await supabase
         .from('vw_users')
         .select('*')
         .eq('email', identifier)
         .single());
+      console.log('Email search result:', { found: !!user, error: authError?.message });
     }
 
-    // 如果邮箱查找失败，尝试通过手机号查找
-    // if (authError || !user) {
-    //   ({ data: user, error: authError } = await supabase
-    //     .from('vw_users')
-    //     .select('*')
-    //     .eq('phone', identifier)
-    //     .single());
-    // }
-
     if (authError || !user) {
+      console.log('User not found');
       // 记录登录失败日志
       await createOperationLog('login', '失败', identifier, request.ip || 'unknown');
       return NextResponse.json({ error: '账号或密码错误' }, { status: 401 });
     }
 
+    console.log('User found, verifying password');
     // 验证密码
     const isPasswordValid = await verifyPassword(password, user.password_hash);
+    console.log('Password verification result:', isPasswordValid);
+    
     if (!isPasswordValid) {
       // 记录登录失败日志
       await createOperationLog('login', '失败', identifier, request.ip || 'unknown');
       return NextResponse.json({ error: '账号或密码错误' }, { status: 401 });
     }
 
+    console.log('Getting user roles');
     // 获取用户角色信息
     const { data: userRoles, error: rolesError } = await supabase
       .from('vw_user_roles')
@@ -72,7 +79,9 @@ export async function POST(request: NextRequest) {
         roles = rolesData;
       }
     }
+    console.log('User roles:', roles.length);
 
+    console.log('Generating JWT token');
     // 生成JWT token
     const token = signJwt({ userId: user.id, email: user.email, roles: roles });
 
@@ -80,6 +89,7 @@ export async function POST(request: NextRequest) {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
+    console.log('Storing token to database');
     // 存储token到数据库
     await supabase
       .from('vw_tokens')
@@ -91,15 +101,18 @@ export async function POST(request: NextRequest) {
         device_info: request.headers.get('user-agent') || 'unknown'
       });
 
+    console.log('Recording operation log');
     // 记录登录成功日志
     await createOperationLog('login', '成功', identifier, request.ip || 'unknown');
 
+    console.log('Updating last login time');
     // 更新最后登录时间
     await supabase
       .from('vw_users')
       .update({ last_login: new Date().toISOString() })
       .eq('id', user.id);
 
+    console.log('Login successful, returning response');
     // 返回token和用户信息，由客户端存储到localStorage
     return NextResponse.json({ 
       success: true, 
@@ -113,8 +126,9 @@ export async function POST(request: NextRequest) {
       token 
     });
   } catch (error) {
-    console.error('登录错误:', error);
-    return NextResponse.json({ error: '登录失败，请重试' }, { status: 500 });
+    console.error('Login error:', error);
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
+    return NextResponse.json({ error: '登录失败，请重试', details: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
   }
 }
 
