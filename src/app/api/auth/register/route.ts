@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 验证用户名格式
-    const usernameRegex = /^[A-Za-z0-9\p{Han}]{1,20}$/u;
+    const usernameRegex = /^[A-Za-z0-9\u4e00-\u9fa5]{1,20}$/;
     if (!usernameRegex.test(username)) {
       return NextResponse.json({ error: '用户名只能输入字母、数字和中文，不能输入空格和符号，长度在20位以内' }, { status: 400 });
     }
