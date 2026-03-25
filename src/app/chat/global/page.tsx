@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { User, Message } from '@/types';
 import { getCurrentUser } from '@/lib/session';
@@ -26,7 +26,7 @@ export default function GlobalChat() {
       const interval = setInterval(loadMessages, 5000);
       return () => clearInterval(interval);
     }
-  }, [currentUser]);
+  }, [currentUser, loadMessages]);
 
   useEffect(() => {
     scrollToBottom();
@@ -36,7 +36,7 @@ export default function GlobalChat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const loadMessages = async () => {
+  const loadMessages = useCallback(async () => {
     if (!currentUser) return;
 
     try {
@@ -52,7 +52,7 @@ export default function GlobalChat() {
     } catch (error) {
       console.error('获取消息错误:', error);
     }
-  };
+  }, [currentUser]);
 
   const sendMessage = async () => {
     if (!newMessage.trim() || !currentUser) return;

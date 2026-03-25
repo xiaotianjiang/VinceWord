@@ -1,8 +1,7 @@
 'use client'
 
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
 
 interface Role {
   id: string;
@@ -57,7 +56,7 @@ export default function RoleManagementPage() {
   const [submitLoading, setSubmitLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  const fetchRoles = async () => {
+  const fetchRoles = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -109,11 +108,11 @@ export default function RoleManagementPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, limit, search]);
 
   useEffect(() => {
     fetchRoles();
-  }, [page, limit, search]);
+  }, [page, limit, search, fetchRoles]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);

@@ -399,7 +399,7 @@ export default function RegisterPage() {
               </button>
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              没有邀请码？点击"申请邀请码"获取
+              没有邀请码？点击&amp;quot;申请邀请码&amp;quot;获取
             </p>
           </div>
 

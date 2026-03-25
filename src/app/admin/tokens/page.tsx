@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PermissionGuard from '@/components/PermissionGuard';
 import { PermissionLevel } from '@/lib/permission';
 
@@ -51,7 +51,7 @@ export default function TokenManagementPage() {
   const [editingToken, setEditingToken] = useState<string | null>(null);
   const [newExpiry, setNewExpiry] = useState<string>('');
 
-  const fetchTokens = async () => {
+  const fetchTokens = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -81,7 +81,7 @@ export default function TokenManagementPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, limit, search, userId]);
 
   const [message, setMessage] = useState<string | null>(null);
   const [messageType, setMessageType] = useState<'success' | 'error' | null>(null);
@@ -231,7 +231,7 @@ export default function TokenManagementPage() {
 
   useEffect(() => {
     fetchTokens();
-  }, [page, limit, search, userId]);
+  }, [page, limit, search, userId, fetchTokens]);
 
   return (
     <PermissionGuard requiredLevel={PermissionLevel.ADMIN}>
