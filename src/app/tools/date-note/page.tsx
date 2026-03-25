@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getCurrentUser } from '@/lib/session';
 import PermissionGuard from '@/components/PermissionGuard';
 
@@ -113,7 +113,7 @@ const DateNotePage = () => {
   };
 
   // 从API获取日记本列表
-  const fetchDiaries = async () => {
+  const fetchDiaries = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -145,10 +145,10 @@ const DateNotePage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchEntries]);
 
   // 从API获取日记列表
-  const fetchEntries = async (diaryId: string) => {
+  const fetchEntries = useCallback(async (diaryId: string) => {
     setEntriesLoading(true);
     setError(null);
     try {
@@ -191,10 +191,10 @@ const DateNotePage = () => {
     } finally {
       setEntriesLoading(false);
     }
-  };
+  }, []);
 
   // 从API获取邀请列表
-  const fetchInvites = async (diaryId?: string) => {
+  const fetchInvites = useCallback(async (diaryId?: string) => {
     try {
       const url = diaryId ? `/api/tools/datenote/shares?diaryId=${diaryId}` : '/api/tools/datenote/shares';
       const response = await fetch(url, {
@@ -222,10 +222,10 @@ const DateNotePage = () => {
     } catch (err) {
       console.error('获取邀请列表失败:', err);
     }
-  };
+  }, []);
 
   // 从API获取用户收到的邀请
-  const fetchUserInvites = async () => {
+  const fetchUserInvites = useCallback(async () => {
     setInvitesLoading(true);
     try {
       const response = await fetch('/api/tools/datenote/shares', {
@@ -256,7 +256,7 @@ const DateNotePage = () => {
     } finally {
       setInvitesLoading(false);
     }
-  };
+  }, []);
 
   // 初始加载
   useEffect(() => {

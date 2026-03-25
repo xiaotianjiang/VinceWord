@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { User } from '@/types';
@@ -87,7 +88,7 @@ export default function Home() {
     }, 5000); // 每5秒切换一次
 
     return () => clearInterval(interval); // 清除定时器
-  }, []);
+  }, [carouselItems.length]);
 
   // 模拟数据概览（只有管理员可见）
   const stats = [
@@ -201,11 +202,14 @@ export default function Home() {
               {carouselItems.map((item, index) => (
                 <div key={item.id} className="min-w-full">
                   <div className="relative h-64 sm:h-80">
-                    <img 
-                      src={item.image} 
-                      alt={item.title} 
-                      className="w-full h-full object-cover"
-                    />
+                    <div className="w-full h-full relative">
+                      <Image 
+                        src={item.image} 
+                        alt={item.title} 
+                        fill 
+                        className="object-cover"
+                      />
+                    </div>
                     <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent flex items-center">
                       <div className="px-8 text-white">
                         <h2 className="text-2xl sm:text-3xl font-bold mb-2">{item.title}</h2>
@@ -232,11 +236,14 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             {news.map((item, index) => (
               <div key={item.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-                <img 
-                  src={item.image} 
-                  alt={item.title} 
-                  className="w-full h-48 object-cover"
-                />
+                <div className="w-full h-48 relative">
+                  <Image 
+                    src={item.image} 
+                    alt={item.title} 
+                    fill 
+                    className="object-cover"
+                  />
+                </div>
                 <div className="p-4">
                   <div className="text-sm text-gray-500 mb-2">{item.date}</div>
                   <h3 className="text-lg font-semibold text-gray-800 mb-2">{item.title}</h3>

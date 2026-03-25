@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 
 export default function PasswordGeneratorPage() {
@@ -14,7 +14,7 @@ export default function PasswordGeneratorPage() {
   const [strength, setStrength] = useState('Weak');
 
   // 生成密码
-  const generatePassword = () => {
+  const generatePassword = useCallback(() => {
     const lowercase = 'abcdefghijklmnopqrstuvwxyz';
     const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const numbers = '0123456789';
@@ -40,10 +40,10 @@ export default function PasswordGeneratorPage() {
 
     setPassword(newPassword);
     calculateStrength(newPassword);
-  };
+  }, [length, includeLowercase, includeUppercase, includeNumbers, includeSymbols, calculateStrength]);
 
   // 计算密码强度
-  const calculateStrength = (pwd: string) => {
+  const calculateStrength = useCallback((pwd: string) => {
     let score = 0;
     if (pwd.length >= 8) score += 1;
     if (pwd.length >= 12) score += 1;
@@ -55,7 +55,7 @@ export default function PasswordGeneratorPage() {
     if (score <= 2) setStrength('Weak');
     else if (score <= 4) setStrength('Medium');
     else setStrength('Strong');
-  };
+  }, []);
 
   // 复制到剪贴板
   const copyToClipboard = async () => {
