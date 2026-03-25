@@ -13,6 +13,21 @@ export default function PasswordGeneratorPage() {
   const [copied, setCopied] = useState(false);
   const [strength, setStrength] = useState('Weak');
 
+  // 计算密码强度
+  const calculateStrength = useCallback((pwd: string) => {
+    let score = 0;
+    if (pwd.length >= 8) score += 1;
+    if (pwd.length >= 12) score += 1;
+    if (/[a-z]/.test(pwd)) score += 1;
+    if (/[A-Z]/.test(pwd)) score += 1;
+    if (/[0-9]/.test(pwd)) score += 1;
+    if (/[^a-zA-Z0-9]/.test(pwd)) score += 1;
+
+    if (score <= 2) setStrength('Weak');
+    else if (score <= 4) setStrength('Medium');
+    else setStrength('Strong');
+  }, []);
+
   // 生成密码
   const generatePassword = useCallback(() => {
     const lowercase = 'abcdefghijklmnopqrstuvwxyz';
@@ -41,21 +56,6 @@ export default function PasswordGeneratorPage() {
     setPassword(newPassword);
     calculateStrength(newPassword);
   }, [length, includeLowercase, includeUppercase, includeNumbers, includeSymbols, calculateStrength]);
-
-  // 计算密码强度
-  const calculateStrength = useCallback((pwd: string) => {
-    let score = 0;
-    if (pwd.length >= 8) score += 1;
-    if (pwd.length >= 12) score += 1;
-    if (/[a-z]/.test(pwd)) score += 1;
-    if (/[A-Z]/.test(pwd)) score += 1;
-    if (/[0-9]/.test(pwd)) score += 1;
-    if (/[^a-zA-Z0-9]/.test(pwd)) score += 1;
-
-    if (score <= 2) setStrength('Weak');
-    else if (score <= 4) setStrength('Medium');
-    else setStrength('Strong');
-  }, []);
 
   // 复制到剪贴板
   const copyToClipboard = async () => {

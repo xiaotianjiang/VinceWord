@@ -43,14 +43,6 @@ export default function TimeRiver() {
   const containerRef = useRef<HTMLDivElement>(null)
   const allStars = useRef<Star[]>([])
   
-  // 初始化星星数据
-  useEffect(() => {
-    const startTime = currentTime - 365 * 24 * 60 * 60 * 1000 // 一年前
-    const endTime = currentTime + 365 * 24 * 60 * 60 * 1000 // 一年后
-    allStars.current = generateStars(startTime, endTime)
-    updateVisibleStars()
-  }, [currentTime, updateVisibleStars])
-  
   // 更新可见星星
   const updateVisibleStars = useCallback(() => {
     if (!containerRef.current) return
@@ -70,6 +62,14 @@ export default function TimeRiver() {
     
     setVisibleStars(starsInView)
   }, [currentTime])
+  
+  // 初始化星星数据
+  useEffect(() => {
+    const startTime = currentTime - 365 * 24 * 60 * 60 * 1000 // 一年前
+    const endTime = currentTime + 365 * 24 * 60 * 60 * 1000 // 一年后
+    allStars.current = generateStars(startTime, endTime)
+    updateVisibleStars()
+  }, [currentTime, updateVisibleStars])
   
   // 处理滚动事件
   const handleScroll = useCallback((e: React.WheelEvent) => {

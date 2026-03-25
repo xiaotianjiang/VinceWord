@@ -11,8 +11,11 @@ export default function Chat() {
 
   useEffect(() => {
     setIsClient(true);
-    const user = getCurrentUser();
-    setCurrentUser(user);
+    const loadUser = async () => {
+      const user = await getCurrentUser();
+      setCurrentUser(user);
+    };
+    loadUser();
   }, []);
 
   if (!isClient) {

@@ -71,10 +71,8 @@ export async function GET(request: NextRequest) {
       .limit(limit);
 
     if (receiverId) {
-      // 私聊消息
-      query = query
-        .or(`sender_id.eq.${decoded.userId},receiver_id.eq.${decoded.userId}`)
-        .and(`sender_id.eq.${receiverId},receiver_id.eq.${receiverId}`);
+      // 私聊消息 - 只获取当前用户与指定接收者之间的消息
+      query = query.or(`(sender_id.eq.${decoded.userId},receiver_id.eq.${receiverId}),(sender_id.eq.${receiverId},receiver_id.eq.${decoded.userId})`);
     } else {
       // 世界聊天消息
       query = query.is('receiver_id', null);

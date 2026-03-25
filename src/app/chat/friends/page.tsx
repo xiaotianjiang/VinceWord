@@ -13,11 +13,14 @@ export default function FriendsChat() {
 
   useEffect(() => {
     setIsClient(true);
-    const user = getCurrentUser();
-    if (user) {
-      setCurrentUser(user);
-      loadUsers(user.id);
-    }
+    const loadUser = async () => {
+      const user = await getCurrentUser();
+      if (user) {
+        setCurrentUser(user);
+        loadUsers(user.id);
+      }
+    };
+    loadUser();
   }, []);
 
   const loadUsers = async (currentUserId: string) => {

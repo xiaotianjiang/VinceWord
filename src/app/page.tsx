@@ -79,25 +79,6 @@ export default function Home() {
     fetchData();
   }, []);
 
-  // 轮播图自动切换
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentCarouselIndex((prevIndex) => 
-        (prevIndex + 1) % carouselItems.length
-      );
-    }, 5000); // 每5秒切换一次
-
-    return () => clearInterval(interval); // 清除定时器
-  }, [carouselItems.length]);
-
-  // 模拟数据概览（只有管理员可见）
-  const stats = [
-    { title: '用户总数', value: '1,234', icon: '👥', color: 'bg-blue-500' },
-    { title: '在线用户', value: '45', icon: '🟢', color: 'bg-green-500' },
-    { title: '游戏次数', value: '5,678', icon: '🎮', color: 'bg-purple-500' },
-    { title: '工具使用', value: '9,876', icon: '🔧', color: 'bg-yellow-500' }
-  ];
-
   // 轮播图数据
   const carouselItems = [
     {
@@ -118,6 +99,25 @@ export default function Home() {
       description: '实用工具等你来用',
       image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=tool%20center%20interface%20with%20various%20tool%20icons&image_size=landscape_16_9'
     }
+  ];
+
+  // 轮播图自动切换
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentCarouselIndex((prevIndex) => 
+        (prevIndex + 1) % carouselItems.length
+      );
+    }, 5000); // 每5秒切换一次
+
+    return () => clearInterval(interval); // 清除定时器
+  }, [carouselItems.length]);
+
+  // 模拟数据概览（只有管理员可见）
+  const stats = [
+    { title: '用户总数', value: '1,234', icon: '👥', color: 'bg-blue-500' },
+    { title: '在线用户', value: '45', icon: '🟢', color: 'bg-green-500' },
+    { title: '游戏次数', value: '5,678', icon: '🎮', color: 'bg-purple-500' },
+    { title: '工具使用', value: '9,876', icon: '🔧', color: 'bg-yellow-500' }
   ];
 
   // 新闻数据

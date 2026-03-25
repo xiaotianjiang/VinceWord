@@ -35,6 +35,9 @@ interface DiaryShare {
   status: 'pending' | 'accepted' | 'rejected';
   createdAt: string;
   updatedAt: string;
+  shareUserName?: string;
+  inviterName?: string;
+  diaryName?: string;
 }
 
 const DateNotePage = () => {
@@ -107,45 +110,10 @@ const DateNotePage = () => {
   };
 
   // 获取认证头
-  const getAuthHeaders = () => {
+  const getAuthHeaders = (): Record<string, string> | undefined => {
     const token = localStorage.getItem('auth-token');
-    return token ? { 'Authorization': `Bearer ${token}` } : {};
+    return token ? { 'Authorization': `Bearer ${token}` } : undefined;
   };
-
-  // 从API获取日记本列表
-  const fetchDiaries = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch('/api/tools/datenote/diaries', {
-        headers: getAuthHeaders()
-      });
-      const data = await response.json();
-      if (data.success) {
-        // 转换API返回的数据格式
-        const formattedDiaries = data.data.map((diary: any) => ({
-          id: diary.id,
-          name: diary.name,
-          permission: diary.permission,
-          userId: diary.user_id,
-          createdAt: diary.created_at,
-          updatedAt: diary.updated_at
-        }));
-        setDiaries(formattedDiaries);
-        if (formattedDiaries.length > 0) {
-          setSelectedDiary(formattedDiaries[0].id);
-          fetchEntries(formattedDiaries[0].id);
-        }
-      } else {
-        setError(data.error || '获取日记本失败');
-      }
-    } catch (err) {
-      setError('网络错误，请稍后重试');
-      console.error('获取日记本失败:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchEntries]);
 
   // 从API获取日记列表
   const fetchEntries = useCallback(async (diaryId: string) => {
@@ -187,11 +155,46 @@ const DateNotePage = () => {
       }
     } catch (err) {
       setError('网络错误，请稍后重试');
-      console.error('获取日记失败:', err);
+      console.error('获取日记错误:', err);
     } finally {
       setEntriesLoading(false);
     }
   }, []);
+
+  // 从API获取日记本列表
+  const fetchDiaries = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/tools/datenote/diaries', {
+        headers: getAuthHeaders()
+      });
+      const data = await response.json();
+      if (data.success) {
+        // 转换API返回的数据格式
+        const formattedDiaries = data.data.map((diary: any) => ({
+          id: diary.id,
+          name: diary.name,
+          permission: diary.permission,
+          userId: diary.user_id,
+          createdAt: diary.created_at,
+          updatedAt: diary.updated_at
+        }));
+        setDiaries(formattedDiaries);
+        if (formattedDiaries.length > 0) {
+          setSelectedDiary(formattedDiaries[0].id);
+          fetchEntries(formattedDiaries[0].id);
+        }
+      } else {
+        setError(data.error || '获取日记本失败');
+      }
+    } catch (err) {
+      setError('网络错误，请稍后重试');
+      console.error('获取日记本失败:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchEntries]);
 
   // 从API获取邀请列表
   const fetchInvites = useCallback(async (diaryId?: string) => {

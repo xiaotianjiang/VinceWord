@@ -2,8 +2,26 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { verifyJwt } from '@/lib/jwt';
 
+interface MenuNode {
+  id: string;
+  name: string;
+  path: string;
+  icon: string;
+  parent_id: string | null;
+  order: number;
+  status: string;
+  access_level: string;
+  created_at: string;
+  children: MenuNode[];
+}
+
 export async function GET(request: NextRequest) {
   try {
+    // 检查是否在静态构建环境中
+    if (process.env.NODE_ENV === 'production' && typeof window === 'undefined') {
+      return NextResponse.json({ error: 'API 路由在静态构建时不可用' }, { status: 503 });
+    }
+
     // 从请求头获取token
     const authHeader = request.headers.get('authorization');
     const token = authHeader?.replace('Bearer ', '');
@@ -53,7 +71,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 构建菜单树
-    const buildMenuTree = (menuList: any[], parentId: string | null = null) => {
+    const buildMenuTree = (menuList: any[], parentId: string | null = null): MenuNode[] => {
       return menuList
         .filter(menu => menu.parent_id === parentId)
         .map(menu => ({
@@ -65,7 +83,7 @@ export async function GET(request: NextRequest) {
     const menuTree = buildMenuTree(menus);
 
     // 过滤出用户有权限的菜单
-    const filterMenuByPermission = async (menuList: any[]) => {
+    const filterMenuByPermission = async (menuList: any[]): Promise<MenuNode[]> => {
       // 获取角色授权的菜单
       let authorizedMenuIds: string[] = [];
       

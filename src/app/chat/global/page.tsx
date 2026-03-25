@@ -15,22 +15,12 @@ export default function GlobalChat() {
 
   useEffect(() => {
     setIsClient(true);
-    const user = getCurrentUser();
-    setCurrentUser(user);
+    const loadUser = async () => {
+      const user = await getCurrentUser();
+      setCurrentUser(user);
+    };
+    loadUser();
   }, []);
-
-  useEffect(() => {
-    if (currentUser) {
-      loadMessages();
-      // 每5秒刷新一次消息
-      const interval = setInterval(loadMessages, 5000);
-      return () => clearInterval(interval);
-    }
-  }, [currentUser, loadMessages]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -53,6 +43,19 @@ export default function GlobalChat() {
       console.error('获取消息错误:', error);
     }
   }, [currentUser]);
+
+  useEffect(() => {
+    if (currentUser) {
+      loadMessages();
+      // 每5秒刷新一次消息
+      const interval = setInterval(loadMessages, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [currentUser, loadMessages]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const sendMessage = async () => {
     if (!newMessage.trim() || !currentUser) return;

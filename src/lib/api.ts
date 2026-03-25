@@ -4,8 +4,8 @@ class ApiService {
     return localStorage.getItem('auth-token');
   }
 
-  private buildHeaders(requiresAuth: boolean = true, customHeaders: Record<string, string> = {}): HeadersInit {
-    const headers: HeadersInit = {
+  private buildHeaders(requiresAuth: boolean = true, customHeaders: Record<string, string> = {}): Record<string, string> {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...customHeaders
     };
