@@ -69,7 +69,7 @@ export default function PasswordGeneratorPage() {
   // 当设置变化时重新生成密码
   useEffect(() => {
     generatePassword();
-  }, [length, includeLowercase, includeUppercase, includeNumbers, includeSymbols]);
+  }, [length, includeLowercase, includeUppercase, includeNumbers, includeSymbols, generatePassword]);
 
   return (
     <div className="min-h-screen bg-gray-100">

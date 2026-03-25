@@ -49,7 +49,7 @@ export default function TimeRiver() {
     const endTime = currentTime + 365 * 24 * 60 * 60 * 1000 // 一年后
     allStars.current = generateStars(startTime, endTime)
     updateVisibleStars()
-  }, [])
+  }, [currentTime, updateVisibleStars])
   
   // 更新可见星星
   const updateVisibleStars = useCallback(() => {

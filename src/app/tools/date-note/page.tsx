@@ -271,21 +271,21 @@ const DateNotePage = () => {
       fetchInvites();
       fetchUserInvites();
     }
-  }, [isLoggedIn]);
+  }, [isLoggedIn, fetchDiaries, fetchInvites, fetchUserInvites]);
 
   // 当选择的共享日记本变化时，重新获取邀请列表
   useEffect(() => {
     if (selectedShareDiary && isLoggedIn) {
       fetchInvites(selectedShareDiary);
     }
-  }, [selectedShareDiary, isLoggedIn]);
+  }, [selectedShareDiary, isLoggedIn, fetchInvites]);
 
   // 当选择的日记本变化时，重新获取日记
   useEffect(() => {
     if (selectedDiary && isLoggedIn) {
       fetchEntries(selectedDiary);
     }
-  }, [selectedDiary, isLoggedIn]);
+  }, [selectedDiary, isLoggedIn, fetchEntries]);
 
   // 处理添加日记本
   const handleAddDiary = async () => {
@@ -1456,7 +1456,7 @@ const DateNotePage = () => {
               <div className="bg-white rounded-lg p-6 w-full max-w-md">
                 <h2 className="text-xl font-semibold mb-4">确认删除</h2>
                 <p className="mb-6">
-                  确定要删除日记本 "{diaryToDelete.name}" 吗？
+                  确定要删除日记本 &quot;{diaryToDelete.name}&quot; 吗？
                   <br />
                   <span className="text-red-500">此操作将同时删除该日记本的所有日记和共享记录，且无法恢复。</span>
                 </p>
