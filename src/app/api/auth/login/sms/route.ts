@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       .eq('id', verificationCode.id);
 
     // 生成JWT token
-    const token = signJwt({ userId: user.id, email: user.email, role: user.role });
+    const token = signJwt({ userId: user.id, email: user.email, roles: [{ id: '', name: user.role, type: user.role }] });
 
     // 记录登录成功日志
     await createOperationLog('login', '成功', phone, request.ip || 'unknown');
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
         id: user.id, 
         username: user.username, 
         email: user.email, 
-        role: user.role 
+        roles: [{ id: '', name: user.role, type: user.role }] 
       },
       token 
     });

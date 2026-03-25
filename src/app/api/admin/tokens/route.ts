@@ -33,7 +33,13 @@ export async function GET(request: NextRequest) {
     }
     
     const decoded = verifyJwt(token);
-    if (!decoded || (decoded.role !== 'admin' && decoded.role !== 'superadmin')) {
+    if (!decoded) {
+      return NextResponse.json({ error: '您没有权限访问此功能' }, { status: 403 });
+    }
+    
+    // 检查是否有管理员或超级管理员角色
+    const hasAdminRole = decoded.roles.some(role => role.type === 'admin' || role.type === 'superadmin');
+    if (!hasAdminRole) {
       return NextResponse.json({ error: '您没有权限访问此功能' }, { status: 403 });
     }
 
@@ -110,7 +116,13 @@ export async function DELETE(request: NextRequest) {
     }
     
     const decoded = verifyJwt(authToken);
-    if (!decoded || (decoded.role !== 'admin' && decoded.role !== 'superadmin')) {
+    if (!decoded) {
+      return NextResponse.json({ error: '您没有权限执行此操作' }, { status: 403 });
+    }
+    
+    // 检查是否有管理员或超级管理员角色
+    const hasAdminRole = decoded.roles.some(role => role.type === 'admin' || role.type === 'superadmin');
+    if (!hasAdminRole) {
       return NextResponse.json({ error: '您没有权限执行此操作' }, { status: 403 });
     }
 
@@ -127,7 +139,7 @@ export async function DELETE(request: NextRequest) {
         .select('token, user_id')
         .eq('id', id)
         .single();
-      targetTokenData = data;
+      targetTokenData = { id, token: data?.token, user_id: data?.user_id };
     } else {
       const { data } = await supabase
         .from('vw_tokens')
@@ -194,7 +206,13 @@ export async function POST(request: NextRequest) {
     }
     
     const decoded = verifyJwt(token);
-    if (!decoded || (decoded.role !== 'admin' && decoded.role !== 'superadmin')) {
+    if (!decoded) {
+      return NextResponse.json({ error: '您没有权限执行此操作' }, { status: 403 });
+    }
+    
+    // 检查是否有管理员或超级管理员角色
+    const hasAdminRole = decoded.roles.some(role => role.type === 'admin' || role.type === 'superadmin');
+    if (!hasAdminRole) {
       return NextResponse.json({ error: '您没有权限执行此操作' }, { status: 403 });
     }
 
@@ -278,7 +296,13 @@ export async function PUT(request: NextRequest) {
     }
     
     const decoded = verifyJwt(token);
-    if (!decoded || (decoded.role !== 'admin' && decoded.role !== 'superadmin')) {
+    if (!decoded) {
+      return NextResponse.json({ error: '您没有权限执行此操作' }, { status: 403 });
+    }
+    
+    // 检查是否有管理员或超级管理员角色
+    const hasAdminRole = decoded.roles.some(role => role.type === 'admin' || role.type === 'superadmin');
+    if (!hasAdminRole) {
       return NextResponse.json({ error: '您没有权限执行此操作' }, { status: 403 });
     }
 

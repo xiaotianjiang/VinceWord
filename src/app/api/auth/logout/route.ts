@@ -57,7 +57,13 @@ export async function DELETE(request: NextRequest) {
 
     const adminToken = authHeader.replace('Bearer ', '');
     const adminDecoded = verifyJwt(adminToken);
-    if (!adminDecoded || (adminDecoded.role !== 'admin' && adminDecoded.role !== 'superadmin')) {
+    if (!adminDecoded) {
+      return NextResponse.json({ error: '您没有权限执行此操作' }, { status: 403 });
+    }
+    
+    // 检查是否有管理员或超级管理员角色
+    const hasAdminRole = adminDecoded.roles.some(role => role.type === 'admin' || role.type === 'superadmin');
+    if (!hasAdminRole) {
       return NextResponse.json({ error: '您没有权限执行此操作' }, { status: 403 });
     }
 

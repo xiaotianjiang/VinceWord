@@ -37,8 +37,7 @@ export async function GET(request: NextRequest) {
       .from('vw_operation_logs')
       .select('*', { count: 'exact' })
       .order('created_at', { ascending: false })
-      .limit(limit)
-      .offset(offset);
+      .range(offset, offset + limit - 1);
 
     if (operation) {
       query = query.eq('operation', operation);

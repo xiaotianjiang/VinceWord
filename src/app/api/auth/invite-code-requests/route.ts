@@ -77,7 +77,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // 更新邀请码申请状态
-    const { data: request, error } = await supabase
+    const { data: updatedRequest, error } = await supabase
       .from('vw_invite_code_requests')
       .update({
         status,
@@ -107,10 +107,10 @@ export async function PUT(request: NextRequest) {
         });
 
       // 这里可以添加发送邮件的逻辑，将邀请码发送给申请人
-      console.log(`邀请码 ${code} 已生成并发送给 ${request.email}`);
+      console.log(`邀请码 ${code} 已生成并发送给 ${updatedRequest.email}`);
     }
 
-    return NextResponse.json({ success: true, request });
+    return NextResponse.json({ success: true, request: updatedRequest });
   } catch (error) {
     console.error('处理邀请码申请错误:', error);
     return NextResponse.json({ error: '处理邀请码申请失败' }, { status: 500 });

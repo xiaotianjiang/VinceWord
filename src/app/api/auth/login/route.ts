@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       .select('role_id')
       .eq('user_id', user.id);
 
-    let roles = [];
+    let roles: { id: string; name: string; type: string }[] = [];
     if (!rolesError && userRoles && userRoles.length > 0) {
       const roleIds = userRoles.map(ur => ur.role_id);
       const { data: rolesData } = await supabase
@@ -171,7 +171,7 @@ export async function GET(request: NextRequest) {
       .select('role_id')
       .eq('user_id', user.id);
 
-    let roles = [];
+    let roles: { id: string; name: string; type: string }[] = [];
     if (!rolesError && userRoles && userRoles.length > 0) {
       const roleIds = userRoles.map(ur => ur.role_id);
       const { data: rolesData } = await supabase

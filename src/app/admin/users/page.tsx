@@ -12,6 +12,7 @@ interface User {
   status: string;
   last_login: string | null;
   created_at: string;
+  source?: string;
 }
 
 interface Pagination {
