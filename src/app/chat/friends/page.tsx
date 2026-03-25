@@ -21,14 +21,18 @@ export default function FriendsChat() {
   }, []);
 
   const loadUsers = async (currentUserId: string) => {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .neq('id', currentUserId)
-      .order('username');
-
-    if (!error && data) {
-      setUsers(data);
+    try {
+      const response = await fetch('/api/auth/users', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
+        }
+      });
+      const data = await response.json();
+      if (response.ok && data.users) {
+        setUsers(data.users.filter((user: User) => user.id !== currentUserId));
+      }
+    } catch (error) {
+      console.error('获取用户列表错误:', error);
     }
   };
 
@@ -122,7 +126,7 @@ export default function FriendsChat() {
                     />
                     <button
                       type="button"
-                      className="px-4 py-2 bg-blue-500 text-black rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 opacity-50 cursor-not-allowed"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 opacity-50 cursor-not-allowed"
                       disabled
                     >
                       发送

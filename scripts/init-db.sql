@@ -99,8 +99,9 @@ INSERT INTO menus (name, path, icon, seq) VALUES
 ('世界聊天', '/chat/global', 'globe', 3),
 ('好友聊天', '/chat/friends', 'users', 4),
 ('我发4', '/game', 'gamepad', 5),
-('用户管理', '/admin/users', 'user-cog', 6),
-('菜单管理', '/admin/menus', 'menu', 7)
+('四人房间', '/four-game', 'users', 6),
+('用户管理', '/admin/users', 'user-cog', 7),
+('菜单管理', '/admin/menus', 'menu', 8)
 ON CONFLICT DO NOTHING;
 
 -- 创建管理员账号（密码：admin123）

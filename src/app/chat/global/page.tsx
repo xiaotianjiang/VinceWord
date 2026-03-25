@@ -22,7 +22,9 @@ export default function GlobalChat() {
   useEffect(() => {
     if (currentUser) {
       loadMessages();
-      subscribeToMessages();
+      // 每5秒刷新一次消息
+      const interval = setInterval(loadMessages, 5000);
+      return () => clearInterval(interval);
     }
   }, [currentUser]);
 
@@ -37,38 +39,19 @@ export default function GlobalChat() {
   const loadMessages = async () => {
     if (!currentUser) return;
 
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*, sender:users(username)')
-      .is('receiver_id', null)
-      .order('created_at', { ascending: true })
-      .limit(50);
-
-    if (!error && data) {
-      setMessages(data);
-    }
-  };
-
-  const subscribeToMessages = () => {
-    const subscription = supabase
-      .channel('global-messages')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: 'receiver_id=is.null'
-        },
-        (payload) => {
-          setMessages(prev => [...prev, payload.new as Message]);
+    try {
+      const response = await fetch('/api/chat/messages', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
         }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
+      });
+      const data = await response.json();
+      if (response.ok && data.messages) {
+        setMessages(data.messages);
+      }
+    } catch (error) {
+      console.error('获取消息错误:', error);
+    }
   };
 
   const sendMessage = async () => {
@@ -76,24 +59,26 @@ export default function GlobalChat() {
 
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('messages')
-        .insert([
-          {
-            sender_id: currentUser.id,
-            content: newMessage.trim(),
-            message_type: 'text'
-          }
-        ]);
-
-      if (!error) {
+      const response = await fetch('/api/chat/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
+        },
+        body: JSON.stringify({
+          content: newMessage.trim(),
+          messageType: 'text'
+        })
+      });
+      const data = await response.json();
+      if (response.ok && data.message) {
+        setMessages(prev => [...prev, data.message]);
         setNewMessage('');
       }
     } catch (error) {
       console.error('发送消息错误:', error);
     } finally {
       setLoading(false);
-      loadMessages()
     }
   };
 
@@ -180,7 +165,7 @@ export default function GlobalChat() {
                 type="button"
                 onClick={sendMessage}
                 disabled={loading || !newMessage.trim()}
-                className="px-4 py-2 bg-blue-500 text-black rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
               >
                 {loading ? '发送中...' : '发送'}
               </button>
@@ -188,9 +173,12 @@ export default function GlobalChat() {
           </div>
         </div>
 
-        <div className="text-center">
+        <div className="text-center space-x-4">
           <a href="/chat" className="text-blue-500 hover:text-blue-700">
             ← 返回聊天选择
+          </a>
+          <a href="/" className="text-blue-500 hover:text-blue-700">
+            ← 返回主页
           </a>
         </div>
       </div>

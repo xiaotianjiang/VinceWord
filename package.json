@@ -6,13 +6,18 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest run"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.38.0",
+    "@types/bcrypt": "^6.0.0",
     "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.0.0",
+    "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.294.0",
     "next": "14.0.0",
     "react": "^18.0.0",
