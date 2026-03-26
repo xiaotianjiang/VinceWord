@@ -10,9 +10,18 @@ const nextConfig = {
       }
     ];
   },
+  // 配置图片域名
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'trae-api-cn.mchost.guru',
+        pathname: '/**'
+      }
+    ]
+  },
   // 配置 API 路由为动态，避免静态构建时的错误
   experimental: {
-    appDir: true,
     serverComponentsExternalPackages: ['@supabase/supabase-js']
   }
 }

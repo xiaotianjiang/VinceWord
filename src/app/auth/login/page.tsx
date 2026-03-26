@@ -3,12 +3,46 @@
 import { useState } from 'react'
 
 export default function LoginPage() {
-  const [activeTab, setActiveTab] = useState<'password' | 'sms'>('password')
-  const [identifier, setIdentifier] = useState('')
-  const [password, setPassword] = useState('')
-  const [phone, setPhone] = useState('')
+  // 从本地缓存中读取登录信息
+  const getRememberedInfo = () => {
+    const rememberedUsername = localStorage.getItem('remembered-username') || '';
+    const rememberedPassword = localStorage.getItem('remembered-password') || '';
+    const rememberedPhone = localStorage.getItem('remembered-phone') || '';
+    
+    // 如果有记住的账号密码，默认勾选记住我
+    if (rememberedUsername && rememberedPassword) {
+      return {
+        identifier: rememberedUsername,
+        password: rememberedPassword,
+        phone: rememberedPhone,
+        remember: true
+      };
+    }
+    // 如果只有记住的手机号，默认切换到短信登录
+    if (rememberedPhone) {
+      return {
+        identifier: '',
+        password: '',
+        phone: rememberedPhone,
+        remember: true
+      };
+    }
+    return {
+      identifier: '',
+      password: '',
+      phone: '',
+      remember: false
+    };
+  };
+
+  const rememberedInfo = getRememberedInfo();
+  
+  const [activeTab, setActiveTab] = useState<'password' | 'sms'>(rememberedInfo.phone ? 'sms' : 'password')
+  const [identifier, setIdentifier] = useState(rememberedInfo.identifier)
+  const [password, setPassword] = useState(rememberedInfo.password)
+  const [phone, setPhone] = useState(rememberedInfo.phone)
   const [code, setCode] = useState('')
-  const [remember, setRemember] = useState(false)
+  const [remember, setRemember] = useState(rememberedInfo.remember)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -44,6 +78,24 @@ export default function LoginPage() {
       localStorage.setItem('auth-token', data.token)
       if (data.user) {
         localStorage.setItem('user-info', JSON.stringify(data.user))
+      }
+      
+      // 处理记住我功能
+      if (remember) {
+        if (activeTab === 'password') {
+          // 账号密码登录，存储账号和密码
+          localStorage.setItem('remembered-username', identifier);
+          localStorage.setItem('remembered-password', password);
+        } else {
+          // 验证码登录，存储手机号
+          localStorage.setItem('remembered-phone', phone);
+        }
+        console.log('已存储登录信息到本地缓存');
+      } else {
+        // 未勾选记住我，清除之前存储的登录信息
+        localStorage.removeItem('remembered-username');
+        localStorage.removeItem('remembered-password');
+        localStorage.removeItem('remembered-phone');
       }
       
       // 登录成功后跳转到回调地址或首页

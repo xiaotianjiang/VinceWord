@@ -676,7 +676,7 @@ const DateNotePage = () => {
         </p>
         <div className="flex justify-center">
           <a 
-            href="/auth/login"
+            href={`/auth/login?callback=${encodeURIComponent('/tools/date-note')}`}
             className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
           >
             去登录
