@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { getCurrentUser } from '@/lib/session';
 import PermissionGuard from '@/components/PermissionGuard';
+import { PieChart, Pie, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 // 类型定义
 interface Diary {
@@ -82,6 +83,8 @@ const DateNotePage = () => {
   const [userInvites, setUserInvites] = useState<any[]>([]);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [invitesLoading, setInvitesLoading] = useState(false);
+  const [showStatistics, setShowStatistics] = useState(true);
+  const [statisticsType, setStatisticsType] = useState<'color' | 'icon'>('color');
 
   // 图标列表
   const icons = [
@@ -111,8 +114,11 @@ const DateNotePage = () => {
 
   // 获取认证头
   const getAuthHeaders = (): Record<string, string> | undefined => {
-    const token = localStorage.getItem('auth-token');
-    return token ? { 'Authorization': `Bearer ${token}` } : undefined;
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('auth-token');
+      return token ? { 'Authorization': `Bearer ${token}` } : undefined;
+    }
+    return undefined;
   };
 
   // 从API获取日记列表
@@ -507,6 +513,35 @@ const DateNotePage = () => {
     setSelectedDate(date);
   };
 
+  // 计算统计数据
+  const getStatisticsData = () => {
+    const filteredEntries = entries.filter(entry => entry.diaryId === selectedDiary);
+    
+    if (statisticsType === 'color') {
+      // 按颜色统计
+      const colorCount: Record<string, number> = {};
+      filteredEntries.forEach(entry => {
+        colorCount[entry.color] = (colorCount[entry.color] || 0) + 1;
+      });
+      return Object.entries(colorCount).map(([color, count]) => ({
+        name: color,
+        value: count,
+        color
+      }));
+    } else {
+      // 按图标统计
+      const iconCount: Record<string, number> = {};
+      filteredEntries.forEach(entry => {
+        iconCount[entry.icon] = (iconCount[entry.icon] || 0) + 1;
+      });
+      return Object.entries(iconCount).map(([icon, count]) => ({
+        name: icon,
+        value: count,
+        color: '#3b82f6' // 默认颜色，可根据需要调整
+      }));
+    }
+  };
+
   // 获取指定日期的日记
   const getEntriesForDate = (date: Date | undefined) => {
     if (!date) return [];
@@ -623,7 +658,7 @@ const DateNotePage = () => {
           >
             ←
           </button>
-          <h3 className="text-lg font-medium">
+          <h3 className="text-base sm:text-lg font-medium">
             {new Date(currentYear, currentMonth).toLocaleString('zh-CN', { year: 'numeric', month: 'long' })}
           </h3>
           <button 
@@ -670,7 +705,7 @@ const DateNotePage = () => {
   const renderLoginPrompt = () => (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full">
-        <h2 className="text-2xl font-bold text-center mb-4">请先登录</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-center mb-4">请先登录</h2>
         <p className="text-gray-600 text-center mb-6">
           您需要登录才能使用《事纪》工具
         </p>
@@ -696,22 +731,22 @@ const DateNotePage = () => {
           {/* 顶部导航 */}
           <header className="bg-white shadow-sm border-b">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-              <h1 className="text-2xl font-bold text-gray-900">《事纪》</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">《事纪》</h1>
               <div className="flex items-center gap-4">
                 <button 
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  className="px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm sm:text-base"
                   onClick={() => setIsAddDiaryOpen(true)}
                 >
                   新建日记本
                 </button>
                 <button 
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  className="px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm sm:text-base"
                   onClick={() => setIsAddEntryOpen(true)}
                 >
                   新建日记
                 </button>
                 <button 
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors relative"
+                  className="px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors relative text-sm sm:text-base"
                   onClick={() => {
                     setIsInviteModalOpen(true);
                     fetchUserInvites();
@@ -740,7 +775,7 @@ const DateNotePage = () => {
               {/* 左侧日记本列表 */}
               <div className="lg:col-span-1">
                 <div className="bg-white rounded-lg shadow-sm border p-4">
-                  <h2 className="text-lg font-semibold mb-4">日记本</h2>
+                  <h2 className="text-base sm:text-lg font-semibold mb-4">日记本</h2>
                   <div className="max-h-[500px] overflow-y-auto">
                     <ul className="space-y-2">
                       {diaries.map(diary => (
@@ -781,25 +816,25 @@ const DateNotePage = () => {
                   {/* 标签页 */}
                   <div className="flex border-b mb-4">
                     <button 
-                      className={`px-4 py-2 ${activeTab === 'calendar' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600 hover:text-gray-900'}`}
+                      className={`px-3 py-1.5 sm:px-4 sm:py-2 ${activeTab === 'calendar' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600 hover:text-gray-900'} text-sm sm:text-base`}
                       onClick={() => setActiveTab('calendar')}
                     >
                       日历视图
                     </button>
                     <button 
-                      className={`px-4 py-2 ${activeTab === 'list' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600 hover:text-gray-900'}`}
+                      className={`px-3 py-1.5 sm:px-4 sm:py-2 ${activeTab === 'list' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600 hover:text-gray-900'} text-sm sm:text-base`}
                       onClick={() => setActiveTab('list')}
                     >
                       日记列表
                     </button>
                     <button 
-                      className={`px-4 py-2 ${activeTab === 'search' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600 hover:text-gray-900'}`}
+                      className={`px-3 py-1.5 sm:px-4 sm:py-2 ${activeTab === 'search' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600 hover:text-gray-900'} text-sm sm:text-base`}
                       onClick={() => setActiveTab('search')}
                     >
                       开放搜索
                     </button>
                     <button 
-                      className={`px-4 py-2 ${activeTab === 'share' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600 hover:text-gray-900'}`}
+                      className={`px-3 py-1.5 sm:px-4 sm:py-2 ${activeTab === 'share' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600 hover:text-gray-900'} text-sm sm:text-base`}
                       onClick={() => setActiveTab('share')}
                     >
                       共享管理
@@ -810,7 +845,7 @@ const DateNotePage = () => {
                   {activeTab === 'calendar' && (
                     <div>
                       <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-lg font-semibold">日历</h2>
+                        <h2 className="text-base sm:text-lg font-semibold">日历</h2>
                         <select 
                           className="border rounded-md px-3 py-2 w-[200px]"
                           value={selectedDiary}
@@ -836,7 +871,7 @@ const DateNotePage = () => {
                           />
                           <hr className="my-4" />
                           <div>
-                            <h3 className="text-md font-medium mb-2">
+                            <h3 className="text-sm sm:text-md font-medium mb-2">
                               {selectedDate ? selectedDate.toLocaleDateString() : '选择日期'} 的日记
                             </h3>
                             <div className="space-y-2">
@@ -870,7 +905,7 @@ const DateNotePage = () => {
                   {activeTab === 'list' && (
                     <div>
                       <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-lg font-semibold">日记列表</h2>
+                        <h2 className="text-base sm:text-lg font-semibold">日记列表</h2>
                         <select 
                           className="border rounded-md px-3 py-2 w-[200px]"
                           value={selectedDiary}
@@ -927,13 +962,103 @@ const DateNotePage = () => {
                           </p>
                         )}
                       </div>
+
+                      {/* 统计图表 */}
+                      {showStatistics && (
+                        <div className="mt-8">
+                          <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-base sm:text-lg font-semibold">统计分析</h3>
+                            <div className="flex items-center gap-4">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  className={`px-3 py-1 rounded-md ${statisticsType === 'color' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}
+                                  onClick={() => setStatisticsType('color')}
+                                >
+                                  按颜色
+                                </button>
+                                <button
+                                  className={`px-3 py-1 rounded-md ${statisticsType === 'icon' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}
+                                  onClick={() => setStatisticsType('icon')}
+                                >
+                                  按图标
+                                </button>
+                              </div>
+                              <button
+                                className="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-md"
+                                onClick={() => setShowStatistics(false)}
+                              >
+                                隐藏
+                              </button>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* 饼状图 */}
+                            <div className="bg-white p-4 rounded-lg border shadow-sm">
+                              <h4 className="text-sm font-medium mb-4">{statisticsType === 'color' ? '颜色分布' : '图标分布'}</h4>
+                              <ResponsiveContainer width="100%" height={300}>
+                                <PieChart>
+                                  <Pie
+                                    data={getStatisticsData()}
+                                    cx="50%"
+                                    cy="50%"
+                                    labelLine={false}
+                                    outerRadius={100}
+                                    fill="#8884d8"
+                                    dataKey="value"
+                                    label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+                                  >
+                                    {getStatisticsData().map((entry, index) => (
+                                      <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                  </Pie>
+                                  <Tooltip />
+                                  <Legend />
+                                </PieChart>
+                              </ResponsiveContainer>
+                            </div>
+                            
+                            {/* 柱状图 */}
+                            <div className="bg-white p-4 rounded-lg border shadow-sm">
+                              <h4 className="text-sm font-medium mb-4">{statisticsType === 'color' ? '颜色数量' : '图标数量'}</h4>
+                              <ResponsiveContainer width="100%" height={300}>
+                                <BarChart
+                                  data={getStatisticsData()}
+                                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                                >
+                                  <CartesianGrid strokeDasharray="3 3" />
+                                  <XAxis dataKey="name" />
+                                  <YAxis />
+                                  <Tooltip />
+                                  <Bar dataKey="value" name="数量">
+                                    {getStatisticsData().map((entry, index) => (
+                                      <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                  </Bar>
+                                </BarChart>
+                              </ResponsiveContainer>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {!showStatistics && (
+                        <div className="mt-8 text-center">
+                          <button
+                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                            onClick={() => setShowStatistics(true)}
+                          >
+                            显示统计分析
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
 
                   {/* 开放搜索 */}
                   {activeTab === 'search' && (
                     <div>
-                      <h2 className="text-lg font-semibold mb-4">开放日记搜索</h2>
+                      <h2 className="text-base sm:text-lg font-semibold mb-4">开放日记搜索</h2>
                       <div className="mb-4">
                         <input
                           type="text"
@@ -955,7 +1080,7 @@ const DateNotePage = () => {
                   {/* 共享管理 */}
                   {activeTab === 'share' && (
                     <div>
-                      <h2 className="text-lg font-semibold mb-4">共享管理</h2>
+                      <h2 className="text-base sm:text-lg font-semibold mb-4">共享管理</h2>
                       <div className="space-y-6">
                         {/* 选择日记本 */}
                         <div>
@@ -980,7 +1105,7 @@ const DateNotePage = () => {
                           <div className="space-y-6">
                             {/* 邀请用户 */}
                             <div>
-                              <h3 className="text-lg font-medium mb-3">邀请用户</h3>
+                              <h3 className="text-base sm:text-lg font-medium mb-3">邀请用户</h3>
                               <button
                                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                                 onClick={() => {
@@ -998,7 +1123,7 @@ const DateNotePage = () => {
 
                             {/* 邀请列表 */}
                             <div>
-                              <h3 className="text-lg font-medium mb-3">邀请列表</h3>
+                              <h3 className="text-base sm:text-lg font-medium mb-3">邀请列表</h3>
                               <div className="space-y-3">
                                 {invites
                                   .filter(invite => invite.diaryId === selectedShareDiary)
@@ -1053,7 +1178,7 @@ const DateNotePage = () => {
                   {isUserModalOpen && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                       <div className="bg-white rounded-lg p-6 w-full max-w-md">
-                        <h2 className="text-xl font-semibold mb-4">选择用户</h2>
+                        <h2 className="text-lg sm:text-xl font-semibold mb-4">选择用户</h2>
                         <div className="space-y-4">
                           <div>
                             <input

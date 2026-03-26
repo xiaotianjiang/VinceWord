@@ -5,27 +5,30 @@ import { useState } from 'react'
 export default function LoginPage() {
   // 从本地缓存中读取登录信息
   const getRememberedInfo = () => {
-    const rememberedUsername = localStorage.getItem('remembered-username') || '';
-    const rememberedPassword = localStorage.getItem('remembered-password') || '';
-    const rememberedPhone = localStorage.getItem('remembered-phone') || '';
-    
-    // 如果有记住的账号密码，默认勾选记住我
-    if (rememberedUsername && rememberedPassword) {
-      return {
-        identifier: rememberedUsername,
-        password: rememberedPassword,
-        phone: rememberedPhone,
-        remember: true
-      };
-    }
-    // 如果只有记住的手机号，默认切换到短信登录
-    if (rememberedPhone) {
-      return {
-        identifier: '',
-        password: '',
-        phone: rememberedPhone,
-        remember: true
-      };
+    // 确保在客户端环境中才访问 localStorage
+    if (typeof window !== 'undefined') {
+      const rememberedUsername = localStorage.getItem('remembered-username') || '';
+      const rememberedPassword = localStorage.getItem('remembered-password') || '';
+      const rememberedPhone = localStorage.getItem('remembered-phone') || '';
+      
+      // 如果有记住的账号密码，默认勾选记住我
+      if (rememberedUsername && rememberedPassword) {
+        return {
+          identifier: rememberedUsername,
+          password: rememberedPassword,
+          phone: rememberedPhone,
+          remember: true
+        };
+      }
+      // 如果只有记住的手机号，默认切换到短信登录
+      if (rememberedPhone) {
+        return {
+          identifier: '',
+          password: '',
+          phone: rememberedPhone,
+          remember: true
+        };
+      }
     }
     return {
       identifier: '',

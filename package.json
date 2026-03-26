@@ -22,6 +22,7 @@
     "next": "14.0.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
+    "recharts": "^3.8.1",
     "tailwind-merge": "^2.0.0",
     "uuid": "^13.0.0"
   },
