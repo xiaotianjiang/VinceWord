@@ -444,22 +444,22 @@ function DigitsCollisionPage() {
       className="min-h-screen bg-gray-100"
     >
         <div 
-          className="container mx-auto px-4 py-8"
+          className="container mx-auto px-3 py-4"
         >
-          <header className="bg-white p-6 rounded-lg shadow-md mb-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <header className="bg-white p-4 rounded-lg shadow-md mb-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">猜数字</h1>
-                <p className="text-gray-600">双人轮流猜数字的游戏</p>
+                <h1 className="text-lg sm:text-xl font-bold text-gray-800 mb-1">猜数字</h1>
+                <p className="text-gray-600 text-sm">双人轮流猜数字的游戏</p>
               </div>
-              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
+              <div className="flex flex-col sm:flex-row space-y-1.5 sm:space-y-0 sm:space-x-1.5 w-full sm:w-auto">
                 <Link href="/games">
-                  <button className="w-full sm:w-auto px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors">
+                  <button className="w-full sm:w-auto px-3 py-1.5 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors text-sm">
                     返回游戏列表
                   </button>
                 </Link>
                 <Link href="/">
-                  <button className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                  <button className="w-full sm:w-auto px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm">
                     返回主页
                   </button>
                 </Link>
@@ -468,29 +468,29 @@ function DigitsCollisionPage() {
           </header>
 
           {/* 玩家信息 */}
-          <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="bg-white p-4 rounded-lg shadow-md mb-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <div>
-                <h2 className="text-lg font-semibold text-gray-800">玩家信息</h2>
-                <p className="text-gray-600">用户名: {playerName}</p>
+                <h2 className="text-md font-semibold text-gray-800">玩家信息</h2>
+                <p className="text-gray-600 text-sm">用户名: {playerName}</p>
               </div>
               {playerStats && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full sm:w-auto">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full sm:w-auto">
                   <div className="text-center">
-                    <p className="text-xs sm:text-sm text-gray-600">游戏场数</p>
-                    <p className="font-bold">{playerStats.total_games}</p>
+                    <p className="text-xs text-gray-600">游戏场数</p>
+                    <p className="font-bold text-sm">{playerStats.total_games}</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xs sm:text-sm text-gray-600">获胜场数</p>
-                    <p className="font-bold">{playerStats.wins}</p>
+                    <p className="text-xs text-gray-600">获胜场数</p>
+                    <p className="font-bold text-sm">{playerStats.wins}</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xs sm:text-sm text-gray-600">逃跑次数</p>
-                    <p className="font-bold">{playerStats.escapes}</p>
+                    <p className="text-xs text-gray-600">逃跑次数</p>
+                    <p className="font-bold text-sm">{playerStats.escapes}</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xs sm:text-sm text-gray-600">胜率</p>
-                    <p className="font-bold">{playerStats.win_rate.toFixed(2)}%</p>
+                    <p className="text-xs text-gray-600">胜率</p>
+                    <p className="font-bold text-sm">{playerStats.win_rate.toFixed(2)}%</p>
                   </div>
                 </div>
               )}
@@ -499,55 +499,55 @@ function DigitsCollisionPage() {
 
           {/* 房间列表 */}
           {activeTab === 'rooms' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* 创建房间按钮 */}
-              <div className="bg-white p-6 rounded-lg shadow-md md:col-span-1 lg:col-span-1 flex items-center justify-center">
+              <div className="bg-white p-4 rounded-lg shadow-md md:col-span-1 lg:col-span-1 flex items-center justify-center">
                 <button
                     onClick={() => setShowCreateRoomModal(true)}
-                    className="w-full px-6 py-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-center"
+                    className="w-full px-4 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-center"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mx-auto mb-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
-                    <span className="text-lg font-medium">创建房间</span>
+                    <span className="text-md font-medium">创建房间</span>
                   </button>
               </div>
 
               {/* 房间列表 */}
-              <div className="bg-white p-6 rounded-lg shadow-md md:col-span-1 lg:col-span-2">
-                <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4">房间列表</h2>
+              <div className="bg-white p-4 rounded-lg shadow-md md:col-span-1 lg:col-span-2">
+                <h2 className="text-md sm:text-lg font-semibold text-gray-800 mb-3">房间列表</h2>
                 {rooms.length === 0 ? (
-                  <p className="text-gray-600 text-center py-8">暂无可用房间</p>
+                  <p className="text-gray-600 text-center py-6">暂无可用房间</p>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {rooms.map((room) => (
                       <div 
                           key={room.id} 
-                          className="border border-gray-200 rounded-md p-4 hover:shadow-md transition-shadow"
+                          className="border border-gray-200 rounded-md p-3 hover:shadow-md transition-shadow"
                         >
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                           <div>
-                            <h3 className="font-semibold">{room.name}</h3>
-                            <div className="grid grid-cols-2 gap-2 sm:grid-cols-1 sm:space-y-1">
-                              <p className="text-sm text-gray-600">
+                            <h3 className="font-semibold text-sm">{room.name}</h3>
+                            <div className="grid grid-cols-2 gap-1 sm:grid-cols-1 sm:space-y-1">
+                              <p className="text-xs text-gray-600">
                                 状态: {room.status === 'waiting' ? '准备中' : room.status === 'playing' ? '游戏中' : '已关闭'}
                               </p>
-                              <p className="text-sm text-gray-600">
+                              <p className="text-xs text-gray-600">
                                 数字位数: {room.digit_count}位
                               </p>
-                              <p className="text-sm text-gray-600">
+                              <p className="text-xs text-gray-600">
                                 观战: {room.can_spectate ? '允许' : '不允许'}
                               </p>
-                              <p className="text-sm text-gray-600">
+                              <p className="text-xs text-gray-600">
                                 玩家: {room.player_count || 0}/2
                               </p>
                             </div>
                           </div>
-                          <div className="space-y-2">
+                          <div className="space-y-1.5">
                             {room.status === 'waiting' && (room.player_count || 0) < 2 && (
                               <button
                                   onClick={() => handleJoinRoom(room.id)}
-                                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                  className="w-full px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
                                 >
                                   加入
                                 </button>
@@ -555,7 +555,7 @@ function DigitsCollisionPage() {
                             {room.status === 'playing' && room.can_spectate && (
                               <button
                                 onClick={() => handleSpectateRoom(room.id)}
-                                className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                                className="w-full px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm"
                               >
                                 观战
                               </button>
@@ -572,56 +572,56 @@ function DigitsCollisionPage() {
 
           {/* 房间内 */}
           {activeTab === 'room' && currentRoom && (
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                <h2 className="text-lg sm:text-xl font-semibold text-gray-800">房间: {currentRoom.name}</h2>
+            <div className="bg-white p-4 rounded-lg shadow-md">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                <h2 className="text-md sm:text-lg font-semibold text-gray-800">房间: {currentRoom.name}</h2>
                 <button
                   onClick={handleLeaveRoom}
-                  className="w-full sm:w-auto px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                  className="w-full sm:w-auto px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm"
                 >
                   离开房间
                 </button>
               </div>
 
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-3">房间信息</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="mb-4">
+                <h3 className="text-md font-semibold mb-2">房间信息</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div>
-                    <p className="text-xs sm:text-sm text-gray-600">状态</p>
-                    <p>{currentRoom.status === "waiting" ? "准备中" : currentRoom.status === "playing" ? "游戏中" : "已关闭"}</p>
+                    <p className="text-xs text-gray-600">状态</p>
+                    <p className="text-sm">{currentRoom.status === "waiting" ? "准备中" : currentRoom.status === "playing" ? "游戏中" : "已关闭"}</p>
                   </div>
                   <div>
-                    <p className="text-xs sm:text-sm text-gray-600">数字位数</p>
-                    <p>{currentRoom.digit_count}位</p>
+                    <p className="text-xs text-gray-600">数字位数</p>
+                    <p className="text-sm">{currentRoom.digit_count}位</p>
                   </div>
                   <div>
-                    <p className="text-xs sm:text-sm text-gray-600">允许观战</p>
-                    <p>{currentRoom.can_spectate ? "是" : "否"}</p>
+                    <p className="text-xs text-gray-600">允许观战</p>
+                    <p className="text-sm">{currentRoom.can_spectate ? "是" : "否"}</p>
                   </div>
                   <div>
-                    <p className="text-xs sm:text-sm text-gray-600">房主</p>
-                    <p className="text-xs sm:text-sm truncate">{currentRoom.host_username || currentRoom.host_id}</p>
+                    <p className="text-xs text-gray-600">房主</p>
+                    <p className="text-xs truncate">{currentRoom.host_username || currentRoom.host_id}</p>
                   </div>
                 </div>
               </div>
 
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-3">玩家列表</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="mb-4">
+                <h3 className="text-md font-semibold mb-2">玩家列表</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {roomPlayers.map((player) => (
-                    <div key={player.id} className="border border-gray-200 rounded-md p-4">
-                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div key={player.id} className="border border-gray-200 rounded-md p-3">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                         <div>
-                          <p className="font-semibold">{player.seat ? `玩家 ${player.seat}` : '观众'}</p>
-                          <p className="text-sm text-gray-600">用户名: {player.username || player.player_id}</p>
-                          <p className="text-sm text-gray-600">
+                          <p className="font-semibold text-sm">{player.seat ? `玩家 ${player.seat}` : '观众'}</p>
+                          <p className="text-xs text-gray-600">用户名: {player.username || player.player_id}</p>
+                          <p className="text-xs text-gray-600">
                             状态: {player.is_ready ? '已准备' : '未准备'}
                           </p>
                         </div>
                         {player.player_id === playerId && player.seat && (
                           <button
                             onClick={handleToggleReady}
-                            className={`w-full px-4 py-2 rounded-md text-white font-medium transition-colors ${player.is_ready ? 'bg-gray-600 hover:bg-gray-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+                            className={`w-full px-3 py-1.5 rounded-md text-white font-medium transition-colors text-sm ${player.is_ready ? 'bg-gray-600 hover:bg-gray-700' : 'bg-blue-600 hover:bg-blue-700'}`}
                           >
                             {player.is_ready ? '取消准备' : '准备'}
                           </button>
@@ -633,8 +633,8 @@ function DigitsCollisionPage() {
               </div>
 
               {roomPlayers.filter(p => p.seat).length < 2 && (
-                <div className="text-center py-8">
-                  <p className="text-gray-600 mb-4">等待其他玩家加入...</p>
+                <div className="text-center py-6">
+                  <p className="text-gray-600 text-sm mb-3">等待其他玩家加入...</p>
                 </div>
               )}
             </div>
@@ -642,62 +642,62 @@ function DigitsCollisionPage() {
 
           {/* 游戏界面 */}
           {activeTab === 'game' && currentGame && (
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                <h2 className="text-lg sm:text-xl font-semibold text-gray-800">游戏中</h2>
+            <div className="bg-white p-4 rounded-lg shadow-md">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                <h2 className="text-md sm:text-lg font-semibold text-gray-800">游戏中</h2>
                 <button
                   onClick={handleLeaveRoom}
-                  className="w-full sm:w-auto px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                  className="w-full sm:w-auto px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm"
                 >
                   离开游戏
                 </button>
               </div>
 
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-3">游戏信息</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="mb-4">
+                <h3 className="text-md font-semibold mb-2">游戏信息</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div>
-                    <p className="text-xs sm:text-sm text-gray-600">状态</p>
-                    <p>{currentGame.status === "playing" ? "进行中" : "已结束"}</p>
+                    <p className="text-xs text-gray-600">状态</p>
+                    <p className="text-sm">{currentGame.status === "playing" ? "进行中" : "已结束"}</p>
                   </div>
                   <div>
-                    <p className="text-xs sm:text-sm text-gray-600">数字位数</p>
-                    <p>{currentGame.digit_count}位</p>
+                    <p className="text-xs text-gray-600">数字位数</p>
+                    <p className="text-sm">{currentGame.digit_count}位</p>
                   </div>
                   <div>
-                    <p className="text-xs sm:text-sm text-gray-600">当前回合</p>
-                    <p className="text-xs sm:text-sm">{currentGame.current_turn === playerId ? "你的回合" : (isSpectator ? `${currentGame.current_turn}` : "对方回合")}</p>
+                    <p className="text-xs text-gray-600">当前回合</p>
+                    <p className="text-xs">{currentGame.current_turn === playerId ? "你的回合" : (isSpectator ? `${currentGame.current_turn}` : "对方回合")}</p>
                   </div>
                   <div>
-                    <p className="text-xs sm:text-sm text-gray-600">模式</p>
-                    <p className="text-green-600 font-semibold">{isSpectator ? "观战" : "参与"}</p>
+                    <p className="text-xs text-gray-600">模式</p>
+                    <p className="text-green-600 font-semibold text-sm">{isSpectator ? "观战" : "参与"}</p>
                   </div>
                   {currentGame.status === "completed" && currentGame.winner_id && (
                     <div className="sm:col-span-4">
-                      <p className="text-xs sm:text-sm text-gray-600">获胜者</p>
-                      <p>{isSpectator ? currentGame.winner_id : (currentGame.winner_id === playerId ? "你" : "对方")}</p>
+                      <p className="text-xs text-gray-600">获胜者</p>
+                      <p className="text-sm">{isSpectator ? currentGame.winner_id : (currentGame.winner_id === playerId ? "你" : "对方")}</p>
                     </div>
                   )}
                 </div>
               </div>
 
               {!isSpectator && currentGame.status === 'playing' && currentGame.current_turn === playerId && (
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold mb-3">你的猜测</h3>
-                  <form onSubmit={handleSubmitGuess} className="flex flex-col sm:flex-row gap-2">
+                <div className="mb-4">
+                  <h3 className="text-md font-semibold mb-2">你的猜测</h3>
+                  <form onSubmit={handleSubmitGuess} className="flex flex-col sm:flex-row gap-1.5">
                     <input
                       type="text"
                       value={guessInput}
                       onChange={(e) => setGuessInput(e.target.value.replace(/[^0-9]/g, ''))}
                       maxLength={currentGame.digit_count}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="flex-1 px-3 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                       placeholder={`请输入${currentGame.digit_count}位数字`}
                       required
                     />
                     <button
                       type="submit"
                       disabled={guessInput.length !== currentGame.digit_count}
-                      className={`w-full sm:w-auto px-6 py-2 rounded-md transition-colors ${guessInput.length === currentGame.digit_count ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'}`}
+                      className={`w-full sm:w-auto px-4 py-1.5 rounded-md transition-colors text-sm ${guessInput.length === currentGame.digit_count ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'}`}
                     >
                       提交猜测
                     </button>
@@ -706,23 +706,23 @@ function DigitsCollisionPage() {
               )}
               
               {isSpectator && (
-                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-md">
-                  <p className="text-green-700 font-semibold">你当前处于观战模式</p>
-                  <p className="text-green-600 text-sm">你可以观看游戏过程，但不能参与游戏</p>
+                <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                  <p className="text-green-700 font-semibold text-sm">你当前处于观战模式</p>
+                  <p className="text-green-600 text-xs">你可以观看游戏过程，但不能参与游戏</p>
                 </div>
               )}
 
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-3">猜测记录</h3>
+              <div className="mb-4">
+                <h3 className="text-md font-semibold mb-2">猜测记录</h3>
                 <div className="overflow-x-auto">
                   <table className="min-w-full border border-gray-200">
                     <thead>
                       <tr className="bg-gray-100">
-                        <th className="border border-gray-200 px-2 sm:px-4 py-2 text-xs sm:text-sm">回合</th>
-                        <th className="border border-gray-200 px-2 sm:px-4 py-2 text-xs sm:text-sm">玩家1猜测</th>
-                        <th className="border border-gray-200 px-2 sm:px-4 py-2 text-xs sm:text-sm">正确数</th>
-                        <th className="border border-gray-200 px-2 sm:px-4 py-2 text-xs sm:text-sm">玩家2猜测</th>
-                        <th className="border border-gray-200 px-2 sm:px-4 py-2 text-xs sm:text-sm">正确数</th>
+                        <th className="border border-gray-200 px-2 py-1.5 text-xs">回合</th>
+                        <th className="border border-gray-200 px-2 py-1.5 text-xs">玩家1猜测</th>
+                        <th className="border border-gray-200 px-2 py-1.5 text-xs">正确数</th>
+                        <th className="border border-gray-200 px-2 py-1.5 text-xs">玩家2猜测</th>
+                        <th className="border border-gray-200 px-2 py-1.5 text-xs">正确数</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -733,11 +733,11 @@ function DigitsCollisionPage() {
                         
                         return (
                           <tr key={round} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                            <td className="border border-gray-200 px-2 sm:px-4 py-2 text-center text-xs sm:text-sm">{round}</td>
-                            <td className="border border-gray-200 px-2 sm:px-4 py-2 text-center text-xs sm:text-sm">{player1Guess?.guess || '-'}</td>
-                            <td className="border border-gray-200 px-2 sm:px-4 py-2 text-center text-xs sm:text-sm">{player1Guess?.hit_count || '-'}</td>
-                            <td className="border border-gray-200 px-2 sm:px-4 py-2 text-center text-xs sm:text-sm">{player2Guess?.guess || '-'}</td>
-                            <td className="border border-gray-200 px-2 sm:px-4 py-2 text-center text-xs sm:text-sm">{player2Guess?.hit_count || '-'}</td>
+                            <td className="border border-gray-200 px-2 py-1.5 text-center text-xs">{round}</td>
+                            <td className="border border-gray-200 px-2 py-1.5 text-center text-xs">{player1Guess?.guess || '-'}</td>
+                            <td className="border border-gray-200 px-2 py-1.5 text-center text-xs">{player1Guess?.hit_count || '-'}</td>
+                            <td className="border border-gray-200 px-2 py-1.5 text-center text-xs">{player2Guess?.guess || '-'}</td>
+                            <td className="border border-gray-200 px-2 py-1.5 text-center text-xs">{player2Guess?.hit_count || '-'}</td>
                           </tr>
                         );
                       })}
@@ -747,21 +747,21 @@ function DigitsCollisionPage() {
               </div>
 
               {currentGame.status === 'completed' && currentGame.winner_id && (
-                <div className="text-center py-8">
-                  <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4">
+                <div className="text-center py-6">
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-3">
                     {isSpectator ? `${currentGame.winner_id}获胜了！` : (currentGame.winner_id === playerId ? '你获胜了！' : '对方获胜了！')}
                   </h3>
-                  <p className="text-gray-600 mb-2 text-sm sm:text-base">
+                  <p className="text-gray-600 mb-2 text-xs sm:text-sm">
                     玩家1目标数字：{currentGame.player1_target}
                   </p>
-                  <p className="text-gray-600 mb-2 text-sm sm:text-base">
+                  <p className="text-gray-600 mb-2 text-xs sm:text-sm">
                     玩家2目标数字：{currentGame.player2_target}
                   </p>
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
                     {!isSpectator && (
                       <button
                         onClick={handleRestartGame}
-                        className="w-full px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                        className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
                       >
                         再玩一局
                       </button>
@@ -771,7 +771,7 @@ function DigitsCollisionPage() {
                         setIsSpectator(false);
                         handleLeaveRoom();
                       }}
-                      className="w-full sm:w-auto px-6 py-3 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
+                      className="w-full sm:w-auto px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors text-sm"
                     >
                       返回房间列表
                     </button>
@@ -783,54 +783,54 @@ function DigitsCollisionPage() {
 
           {/* 个人统计 */}
           {activeTab === 'stats' && (
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <h2 className="text-xl font-semibold text-gray-800 mb-6">个人统计</h2>
+            <div className="bg-white p-4 rounded-lg shadow-md">
+              <h2 className="text-lg font-semibold text-gray-800 mb-4">个人统计</h2>
               
               {/* 详细统计信息 */}
               {playerStats && (
-                <div className="mb-8">
-                  <h3 className="text-lg font-semibold mb-4">详细统计信息</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <div className="grid grid-cols-2 gap-4">
+                <div className="mb-6">
+                  <h3 className="text-md font-semibold mb-3">详细统计信息</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <div className="grid grid-cols-2 gap-3">
                         <div className="text-center">
-                          <p className="text-sm text-gray-600">游戏场数</p>
-                          <p className="text-2xl font-bold">{playerStats.total_games}</p>
+                          <p className="text-xs text-gray-600">游戏场数</p>
+                          <p className="text-xl font-bold">{playerStats.total_games}</p>
                         </div>
                         <div className="text-center">
-                          <p className="text-sm text-gray-600">获胜场数</p>
-                          <p className="text-2xl font-bold text-green-600">{playerStats.wins}</p>
+                          <p className="text-xs text-gray-600">获胜场数</p>
+                          <p className="text-xl font-bold text-green-600">{playerStats.wins}</p>
                         </div>
                         <div className="text-center">
-                          <p className="text-sm text-gray-600">逃跑次数</p>
-                          <p className="text-2xl font-bold text-red-600">{playerStats.escapes}</p>
+                          <p className="text-xs text-gray-600">逃跑次数</p>
+                          <p className="text-xl font-bold text-red-600">{playerStats.escapes}</p>
                         </div>
                         <div className="text-center">
-                          <p className="text-sm text-gray-600">胜率</p>
-                          <p className="text-2xl font-bold text-blue-600">{playerStats.win_rate.toFixed(2)}%</p>
+                          <p className="text-xs text-gray-600">胜率</p>
+                          <p className="text-xl font-bold text-blue-600">{playerStats.win_rate.toFixed(2)}%</p>
                         </div>
                       </div>
                     </div>
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h4 className="font-semibold mb-2">游戏数据</h4>
-                      <ul className="space-y-2">
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <h4 className="font-semibold text-sm mb-2">游戏数据</h4>
+                      <ul className="space-y-1.5">
                         <li className="flex justify-between">
-                          <span className="text-gray-600">总回合数</span>
-                          <span className="font-semibold">{playerStats.total_rounds}</span>
+                          <span className="text-gray-600 text-sm">总回合数</span>
+                          <span className="font-semibold text-sm">{playerStats.total_rounds}</span>
                         </li>
                         <li className="flex justify-between">
-                          <span className="text-gray-600">平均回合数</span>
-                          <span className="font-semibold">
+                          <span className="text-gray-600 text-sm">平均回合数</span>
+                          <span className="font-semibold text-sm">
                             {playerStats.total_games > 0 ? (playerStats.total_rounds / playerStats.total_games).toFixed(1) : '0'}
                           </span>
                         </li>
                         <li className="flex justify-between">
-                          <span className="text-gray-600">获胜率</span>
-                          <span className="font-semibold">{playerStats.win_rate.toFixed(2)}%</span>
+                          <span className="text-gray-600 text-sm">获胜率</span>
+                          <span className="font-semibold text-sm">{playerStats.win_rate.toFixed(2)}%</span>
                         </li>
                         <li className="flex justify-between">
-                          <span className="text-gray-600">逃跑率</span>
-                          <span className="font-semibold">
+                          <span className="text-gray-600 text-sm">逃跑率</span>
+                          <span className="font-semibold text-sm">
                             {playerStats.total_games > 0 ? ((playerStats.escapes / playerStats.total_games) * 100).toFixed(2) : '0'}%
                           </span>
                         </li>
@@ -841,39 +841,39 @@ function DigitsCollisionPage() {
               )}
               
               {/* 历史对局记录 */}
-              <div className="mb-8">
-                <h3 className="text-lg font-semibold mb-4">历史对局记录</h3>
+              <div className="mb-6">
+                <h3 className="text-md font-semibold mb-3">历史对局记录</h3>
                 {historyLoading ? (
-                  <div className="flex justify-center items-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-                    <span className="ml-2 text-gray-600">加载中...</span>
+                  <div className="flex justify-center items-center py-6">
+                    <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+                    <span className="ml-2 text-gray-600 text-sm">加载中...</span>
                   </div>
                 ) : gameHistory.length === 0 ? (
-                  <p className="text-gray-600 text-center py-8">暂无历史对局记录</p>
+                  <p className="text-gray-600 text-center py-6">暂无历史对局记录</p>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="min-w-full border border-gray-200">
                       <thead>
                         <tr className="bg-gray-100">
-                          <th className="border border-gray-200 px-4 py-2 text-left">游戏ID</th>
-                          <th className="border border-gray-200 px-4 py-2 text-left">对手</th>
-                          <th className="border border-gray-200 px-4 py-2 text-left">数字位数</th>
-                          <th className="border border-gray-200 px-4 py-2 text-left">结果</th>
-                          <th className="border border-gray-200 px-4 py-2 text-left">回合数</th>
-                          <th className="border border-gray-200 px-4 py-2 text-left">时间</th>
+                          <th className="border border-gray-200 px-3 py-1.5 text-left text-xs">游戏ID</th>
+                          <th className="border border-gray-200 px-3 py-1.5 text-left text-xs">对手</th>
+                          <th className="border border-gray-200 px-3 py-1.5 text-left text-xs">数字位数</th>
+                          <th className="border border-gray-200 px-3 py-1.5 text-left text-xs">结果</th>
+                          <th className="border border-gray-200 px-3 py-1.5 text-left text-xs">回合数</th>
+                          <th className="border border-gray-200 px-3 py-1.5 text-left text-xs">时间</th>
                         </tr>
                       </thead>
                       <tbody>
                         {gameHistory.map((game, index) => (
                           <tr key={game.game_id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                            <td className="border border-gray-200 px-4 py-2">{game.game_id}</td>
-                            <td className="border border-gray-200 px-4 py-2">{game.opponent_username}</td>
-                            <td className="border border-gray-200 px-4 py-2">{game.digit_count}</td>
-                            <td className={`border border-gray-200 px-4 py-2 ${game.result === '胜利' ? 'text-green-600' : game.result === '失败' ? 'text-red-600' : 'text-gray-600'}`}>
+                            <td className="border border-gray-200 px-3 py-1.5 text-xs">{game.game_id}</td>
+                            <td className="border border-gray-200 px-3 py-1.5 text-xs">{game.opponent_username}</td>
+                            <td className="border border-gray-200 px-3 py-1.5 text-xs">{game.digit_count}</td>
+                            <td className={`border border-gray-200 px-3 py-1.5 text-xs ${game.result === '胜利' ? 'text-green-600' : game.result === '失败' ? 'text-red-600' : 'text-gray-600'}`}>
                               {game.result}
                             </td>
-                            <td className="border border-gray-200 px-4 py-2">{game.round_count}</td>
-                            <td className="border border-gray-200 px-4 py-2">
+                            <td className="border border-gray-200 px-3 py-1.5 text-xs">{game.round_count}</td>
+                            <td className="border border-gray-200 px-3 py-1.5 text-xs">
                               {new Date(game.created_at).toLocaleString()}
                             </td>
                           </tr>
@@ -886,10 +886,10 @@ function DigitsCollisionPage() {
               
               {/* 胜率图表 */}
               <div>
-                <h3 className="text-lg font-semibold mb-4">胜率图表</h3>
+                <h3 className="text-md font-semibold mb-3">胜率图表</h3>
                 {playerStats ? (
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="h-64">
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <div className="h-56">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
@@ -901,7 +901,7 @@ function DigitsCollisionPage() {
                             cx="50%"
                             cy="50%"
                             labelLine={false}
-                            outerRadius={100}
+                            outerRadius={80}
                             fill="#8884d8"
                             dataKey="value"
                             label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(1)}%`}
@@ -921,9 +921,9 @@ function DigitsCollisionPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="h-64 flex items-center justify-center">
-                      <p className="text-gray-500">暂无统计数据</p>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <div className="h-56 flex items-center justify-center">
+                      <p className="text-gray-500 text-sm">暂无统计数据</p>
                     </div>
                   </div>
                 )}
@@ -933,9 +933,9 @@ function DigitsCollisionPage() {
           
           {/* 游戏规则 */}
           {activeTab !== 'stats' && (
-            <div className="mt-6 bg-white p-6 rounded-lg shadow-md">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">游戏规则</h2>
-              <ul className="space-y-2 text-gray-600">
+            <div className="mt-4 bg-white p-4 rounded-lg shadow-md">
+              <h2 className="text-lg font-semibold text-gray-800 mb-3">游戏规则</h2>
+              <ul className="space-y-1.5 text-gray-600 text-sm">
                 <li>1. 游戏开始前，双方设定一个{digitCount}位数字（系统自动生成）</li>
                 <li>2. 双方轮流猜测对方的数字</li>
                 <li>3. 每次猜测后，系统会告知有几个数字的位置完全正确（撞对数）</li>
@@ -950,40 +950,40 @@ function DigitsCollisionPage() {
         {showCreateRoomModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div 
-              className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full"
+              className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full"
             >
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-800">创建房间</h2>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-bold text-gray-800">创建房间</h2>
                 <button 
                   onClick={() => setShowCreateRoomModal(false)}
                   className="text-gray-500 hover:text-gray-700"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
-              <form onSubmit={handleCreateRoom} className="space-y-4">
+              <form onSubmit={handleCreateRoom} className="space-y-3">
                 <div>
-                  <label className="block text-gray-700 mb-2">房间名称</label>
+                  <label className="block text-gray-700 mb-1.5 text-sm">房间名称</label>
                   <input
                     type="text"
                     value={roomName}
                     onChange={(e) => setRoomName(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                     placeholder="输入房间名称"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 mb-2">游戏规则</label>
-                  <div className="flex flex-wrap gap-2">
+                  <label className="block text-gray-700 mb-1.5 text-sm">游戏规则</label>
+                  <div className="flex flex-wrap gap-1.5">
                     {[4, 5, 6].map((digits) => (
                       <button
                         key={digits}
                         type="button"
                         onClick={() => setDigitCount(digits)}
-                        className={`px-3 py-1 sm:px-4 sm:py-2 rounded-md transition-colors ${digitCount === digits ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+                        className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-md transition-colors text-sm ${digitCount === digits ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
                       >
                         {digits}位数
                       </button>
@@ -991,7 +991,7 @@ function DigitsCollisionPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="flex items-center">
+                  <label className="flex items-center text-sm">
                     <input
                       type="checkbox"
                       checked={canSpectate}
@@ -1001,17 +1001,17 @@ function DigitsCollisionPage() {
                     <span>允许观战</span>
                   </label>
                 </div>
-                <div className="flex space-x-4">
+                <div className="flex space-x-3">
                   <button 
                     type="button"
                     onClick={() => setShowCreateRoomModal(false)}
-                    className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
+                    className="flex-1 px-3 py-1.5 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors text-sm"
                   >
                     取消
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    className="flex-1 px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
                   >
                     创建房间
                   </button>
