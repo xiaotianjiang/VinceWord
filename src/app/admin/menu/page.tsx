@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface Menu {
   id: string;
@@ -87,7 +87,7 @@ export default function MenuManagementPage() {
   // 操作消息
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
-  const fetchMenus = async () => {
+  const fetchMenus = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -118,10 +118,10 @@ export default function MenuManagementPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [search]);
 
   // 获取菜单选项
-  const fetchOptions = async () => {
+  const fetchOptions = useCallback(async () => {
     setLoadingOptions(true);
     try {
       const token = localStorage.getItem('auth-token');
@@ -144,12 +144,12 @@ export default function MenuManagementPage() {
     } finally {
       setLoadingOptions(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchMenus();
     fetchOptions();
-  }, [page, limit, search]);
+  }, [page, limit, search, fetchMenus, fetchOptions]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);

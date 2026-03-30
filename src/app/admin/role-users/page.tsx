@@ -109,7 +109,7 @@ export default function RoleUsersPage() {
   }, [page, limit, search]);
 
   // 扁平化树状结构的角色数据
-  const flattenRoles = (roles: any[]): Role[] => {
+  const flattenRoles = useCallback((roles: any[]): Role[] => {
     let result: Role[] = [];
     
     const processRole = (role: any, level: number = 0) => {
@@ -127,7 +127,7 @@ export default function RoleUsersPage() {
     
     roles.forEach(role => processRole(role));
     return result;
-  };
+  }, []);
 
   const fetchRoles = useCallback(async () => {
     try {

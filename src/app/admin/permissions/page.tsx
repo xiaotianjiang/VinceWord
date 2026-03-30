@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface Permission {
   id: string;
@@ -76,7 +76,7 @@ export default function PermissionManagementPage() {
   // 选中的角色（用于权限分配）
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
 
-  const fetchPermissions = async () => {
+  const fetchPermissions = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -106,11 +106,11 @@ export default function PermissionManagementPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, limit, search]);
 
   useEffect(() => {
     fetchPermissions();
-  }, [page, limit, search]);
+  }, [page, limit, search, fetchPermissions]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);

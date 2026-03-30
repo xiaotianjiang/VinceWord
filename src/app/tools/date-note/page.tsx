@@ -19,6 +19,7 @@ interface DiaryEntry {
   id: string;
   diaryId: string;
   userId: string;
+  username?: string;
   description: string;
   startTime: string;
   endTime?: string;
@@ -104,6 +105,30 @@ const DateNotePage = () => {
     '#14b8a6', '#f43f5e', '#eab308', '#8b4513', '#22c55e',
     '#7c3aed', '#0ea5e9', '#065f46', '#fb923c', '#f472b6'
   ];
+  
+  // 颜色名称映射
+  const colorNames: Record<string, string> = {
+    '#3b82f6': '蓝色',
+    '#ef4444': '红色',
+    '#10b981': '绿色',
+    '#f59e0b': '黄色',
+    '#8b5cf6': '紫色',
+    '#ec4899': '粉色',
+    '#06b6d4': '青色',
+    '#84cc16': '浅绿色',
+    '#f97316': '橙色',
+    '#6366f1': '靛蓝色',
+    '#14b8a6': '深青色',
+    '#f43f5e': '玫红色',
+    '#eab308': '金色',
+    '#8b4513': '棕色',
+    '#22c55e': '深绿色',
+    '#7c3aed': '深紫色',
+    '#0ea5e9': '天蓝色',
+    '#065f46': '暗绿色',
+    '#fb923c': '亮橙色',
+    '#f472b6': '亮粉色'
+  };
 
   // 检查用户登录状态
   const checkLoginStatus = async () => {
@@ -136,6 +161,7 @@ const DateNotePage = () => {
           id: entry.id,
           diaryId: entry.diary_id,
           userId: entry.user_id,
+          username: entry.username || entry.user_name || entry.user?.username,
           description: entry.description,
           startTime: entry.start_time,
           endTime: entry.end_time,
@@ -524,7 +550,7 @@ const DateNotePage = () => {
         colorCount[entry.color] = (colorCount[entry.color] || 0) + 1;
       });
       return Object.entries(colorCount).map(([color, count]) => ({
-        name: color,
+        name: colorNames[color] || color,
         value: count,
         color
       }));
@@ -883,6 +909,7 @@ const DateNotePage = () => {
                                       <p className="text-sm text-gray-600">
                                         {new Date(entry.startTime).toLocaleTimeString()}
                                         {entry.endTime && ` - ${new Date(entry.endTime).toLocaleTimeString()}`}
+                                        {entry.username && ` · ${entry.username}`}
                                       </p>
                                       <p className="mt-1">{entry.description}</p>
                                     </div>
@@ -932,6 +959,7 @@ const DateNotePage = () => {
                                         <p className="text-sm text-gray-600">
                                           {new Date(entry.startTime).toLocaleString()}
                                           {entry.endTime && ` - ${new Date(entry.endTime).toLocaleTimeString()}`}
+                                          {entry.username && ` · ${entry.username}`}
                                         </p>
                                         <p className="mt-1">{entry.description}</p>
                                       </div>
@@ -1006,7 +1034,13 @@ const DateNotePage = () => {
                                     outerRadius={100}
                                     fill="#8884d8"
                                     dataKey="value"
-                                    label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+                                    label={({ name, percent }) => {
+                                      if (statisticsType === 'color') {
+                                        // 对于颜色统计，不显示文字标签，只通过颜色区分
+                                        return `${((percent || 0) * 100).toFixed(0)}%`;
+                                      }
+                                      return `${name} ${((percent || 0) * 100).toFixed(0)}%`;
+                                    }}
                                   >
                                     {getStatisticsData().map((entry, index) => (
                                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -1027,7 +1061,34 @@ const DateNotePage = () => {
                                   margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                                 >
                                   <CartesianGrid strokeDasharray="3 3" />
-                                  <XAxis dataKey="name" />
+                                  <XAxis 
+                                    dataKey="name" 
+                                    tick={({ x, y, payload }) => {
+                                      const dataPayload = payload as any;
+                                      if (statisticsType === 'color') {
+                                        // 对于颜色统计，显示颜色块
+                                        return (
+                                          <g transform={`translate(${x},${Number(y) + 20})`}>
+                                            <rect 
+                                              x={-10} 
+                                              y={-10} 
+                                              width={20} 
+                                              height={20} 
+                                              fill={dataPayload.color} 
+                                              stroke="#fff" 
+                                              strokeWidth={1}
+                                            />
+                                          </g>
+                                        );
+                                      }
+                                      // 对于图标统计，显示文字
+                                      return (
+                                        <text x={x} y={Number(y) + 20} textAnchor="middle" fill="#666">
+                                          {dataPayload.value}
+                                        </text>
+                                      );
+                                    }}
+                                  />
                                   <YAxis />
                                   <Tooltip />
                                   <Bar dataKey="value" name="数量">

@@ -32,7 +32,7 @@ export default function RoleMenusPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // 扁平化树状结构的角色数据
-  const flattenRoles = (roles: any[]): Role[] => {
+  const flattenRoles = useCallback((roles: any[]): Role[] => {
     let result: Role[] = [];
     
     const processRole = (role: any, level: number = 0) => {
@@ -50,7 +50,7 @@ export default function RoleMenusPage() {
     
     roles.forEach(role => processRole(role));
     return result;
-  };
+  }, []);
 
   // 获取角色列表
   const fetchRoles = useCallback(async () => {

@@ -28,6 +28,13 @@ export default function GamesPage() {
       description: '考验你的记忆力',
       path: '/games/memory',
       requiresPermission: false
+    },
+    {
+      id: 'digits-collision',
+      name: '数字撞对',
+      description: '双人轮流猜数字的游戏',
+      path: '/games/digits-collision',
+      requiresPermission: false
     }
   ]);
 
