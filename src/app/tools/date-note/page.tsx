@@ -1563,7 +1563,7 @@ const DateNotePage = () => {
                         type="datetime-local"
                         step="1"
                         className="w-full border rounded-md px-3 py-2"
-                        value={newEntry.startTime.slice(0, 16)}
+                        value={newEntry.startTime.slice(0, 19)}
                         onChange={(e) => {
                           console.log('选择的时间:', e.target.value);
                           // 直接使用输入的值，确保时间格式正确
@@ -1577,7 +1577,7 @@ const DateNotePage = () => {
                         type="datetime-local"
                         step="1"
                         className="w-full border rounded-md px-3 py-2"
-                        value={newEntry.endTime ? newEntry.endTime.slice(0, 16) : ''}
+                        value={newEntry.endTime ? newEntry.endTime.slice(0, 19) : ''}
                         onChange={(e) => setNewEntry({ ...newEntry, endTime: e.target.value ? e.target.value + '.000Z' : undefined })}
                       />
                     </div>
