@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { verifyJwt } from '@/lib/jwt';
 
-// 从请求头获取用户信息
-async function getUserFromRequest(request: NextRequest) {
+// 验证用户并获取用户ID
+async function verifyUser(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
   if (!authHeader) {
     return null;
@@ -15,72 +15,55 @@ async function getUserFromRequest(request: NextRequest) {
     return null;
   }
 
-  // 获取用户信息
+  // 只需要验证用户是否存在，不需要获取完整信息
   const { data: user } = await supabase
     .from('vw_users')
-    .select('*')
+    .select('id')
     .eq('id', decoded.userId)
     .single();
 
-  if (!user) {
-    return null;
-  }
-
-  // 获取用户角色
-  const { data: userRoles } = await supabase
-    .from('vw_user_roles')
-    .select('role_id')
-    .eq('user_id', user.id);
-
-  if (userRoles) {
-    const roleIds = userRoles.map(ur => ur.role_id);
-    const { data: roles } = await supabase
-      .from('vw_roles')
-      .select('*')
-      .in('id', roleIds);
-
-    user.roles = roles || [];
-  }
-
-  return user;
+  return user?.id;
 }
 
 // 邀请用户
 export async function POST(request: NextRequest) {
   try {
-    const user = await getUserFromRequest(request);
-    if (!user) {
+    const userId = await verifyUser(request);
+    if (!userId) {
       return NextResponse.json({ error: '请先登录' }, { status: 401 });
     }
 
-    const { diaryId, userId } = await request.json();
+    const { diaryId, userId: shareUserId } = await request.json();
 
-    if (!diaryId || !userId) {
+    if (!diaryId || !shareUserId) {
       return NextResponse.json({ error: '缺少必要参数' }, { status: 400 });
     }
 
-    // 验证日记本是否存在且属于当前用户
-    const { data: diary, error: diaryError } = await supabase
-      .from('tool_datenote_diaries')
-      .select('*')
-      .eq('id', diaryId)
-      .eq('user_id', user.id)
-      .single();
+    // 并行执行验证操作
+    const [diaryResult, existingShareResult] = await Promise.all([
+      // 验证日记本是否存在且属于当前用户（只查询必要字段）
+      supabase
+        .from('tool_datenote_diaries')
+        .select('id')
+        .eq('id', diaryId)
+        .eq('user_id', userId)
+        .single(),
+      
+      // 检查是否已经邀请过该用户（只检查待处理或已接受的邀请）
+      supabase
+        .from('tool_datenote_shares')
+        .select('id')
+        .eq('diary_id', diaryId)
+        .eq('share_user_id', shareUserId)
+        .in('status', ['pending', 'accepted'])
+        .single()
+    ]);
 
-    if (diaryError || !diary) {
+    if (diaryResult.error || !diaryResult.data) {
       return NextResponse.json({ error: '日记本不存在或您没有权限' }, { status: 403 });
     }
 
-    // 检查是否已经邀请过该用户（只检查待处理或已接受的邀请）
-    const { data: existingShare, error: existingShareError } = await supabase
-      .from('tool_datenote_shares')
-      .select('*')
-      .eq('diary_id', diaryId)
-      .eq('share_user_id', userId)
-      .in('status', ['pending', 'accepted'])
-      .single();
-
-    if (!existingShareError && existingShare) {
+    if (!existingShareResult.error && existingShareResult.data) {
       return NextResponse.json({ error: '已经邀请过该用户' }, { status: 400 });
     }
 
@@ -88,8 +71,8 @@ export async function POST(request: NextRequest) {
       .from('tool_datenote_shares')
       .insert({
         diary_id: diaryId,
-        user_id: user.id,
-        share_user_id: userId,
+        user_id: userId,
+        share_user_id: shareUserId,
         status: 'pending'
       })
       .select()
@@ -110,8 +93,8 @@ export async function POST(request: NextRequest) {
 // 获取邀请列表
 export async function GET(request: NextRequest) {
   try {
-    const user = await getUserFromRequest(request);
-    if (!user) {
+    const userId = await verifyUser(request);
+    if (!userId) {
       return NextResponse.json({ error: '请先登录' }, { status: 401 });
     }
 
@@ -135,12 +118,12 @@ export async function GET(request: NextRequest) {
       `);
 
     if (diaryId) {
-      // 验证日记本是否属于当前用户
+      // 验证日记本是否属于当前用户（只查询必要字段）
       const { data: diary, error: diaryError } = await supabase
         .from('tool_datenote_diaries')
-        .select('*')
+        .select('id')
         .eq('id', diaryId)
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .single();
 
       if (diaryError || !diary) {
@@ -151,7 +134,7 @@ export async function GET(request: NextRequest) {
       query = query.eq('diary_id', diaryId);
     } else {
       // 获取用户收到的邀请
-      query = query.eq('share_user_id', user.id);
+      query = query.eq('share_user_id', userId);
     }
 
     const { data, error } = await query;
@@ -171,8 +154,8 @@ export async function GET(request: NextRequest) {
 // 处理邀请（接受/拒绝）
 export async function PUT(request: NextRequest) {
   try {
-    const user = await getUserFromRequest(request);
-    if (!user) {
+    const userId = await verifyUser(request);
+    if (!userId) {
       return NextResponse.json({ error: '请先登录' }, { status: 401 });
     }
 
@@ -186,12 +169,12 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: '无效的状态' }, { status: 400 });
     }
 
-    // 验证邀请是否存在且属于当前用户
+    // 验证邀请是否存在且属于当前用户（只查询必要字段）
     const { data: invite, error: inviteError } = await supabase
       .from('tool_datenote_shares')
-      .select('*')
+      .select('status')
       .eq('id', inviteId)
-      .eq('share_user_id', user.id)
+      .eq('share_user_id', userId)
       .single();
 
     if (inviteError || !invite) {
@@ -225,8 +208,8 @@ export async function PUT(request: NextRequest) {
 // 取消邀请（更新状态为cancel）
 export async function DELETE(request: NextRequest) {
   try {
-    const user = await getUserFromRequest(request);
-    if (!user) {
+    const userId = await verifyUser(request);
+    if (!userId) {
       return NextResponse.json({ error: '请先登录' }, { status: 401 });
     }
 
@@ -237,12 +220,12 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: '缺少必要参数' }, { status: 400 });
     }
 
-    // 验证邀请是否存在且当前用户是邀请人
+    // 验证邀请是否存在且当前用户是邀请人（只查询必要字段）
     const { data: invite, error: inviteError } = await supabase
       .from('tool_datenote_shares')
-      .select('*')
+      .select('status')
       .eq('id', inviteId)
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .single();
 
     if (inviteError || !invite) {

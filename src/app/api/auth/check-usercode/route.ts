@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-// 模拟数据库检查
-// 实际项目中应该连接数据库查询
-const existingUsercodes = new Set(['admin', 'test', 'user'])
+import { supabase } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,11 +15,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '账号格式不正确' }, { status: 400 })
     }
 
-    // 检查账号是否已存在
-    const available = !existingUsercodes.has(usercode)
+    // 从数据库检查账号是否已存在
+    const { data: existingUser, error } = await supabase
+      .from('vw_users')
+      .select('id')
+      .eq('usercode', usercode)
+      .single()
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 是未找到记录的错误码
+      console.error('检查账号时出错:', error)
+      return NextResponse.json({ error: '服务器错误' }, { status: 500 })
+    }
+
+    // 如果找到用户，则账号已存在
+    const available = !existingUser
 
     return NextResponse.json({ available })
   } catch (error) {
+    console.error('检查账号时出错:', error)
     return NextResponse.json({ error: '服务器错误' }, { status: 500 })
   }
 }

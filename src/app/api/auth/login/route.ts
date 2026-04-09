@@ -22,26 +22,15 @@ export async function POST(request: NextRequest) {
     let user;
     let authError;
 
-    console.log('Searching user by usercode:', identifier);
-    // 尝试通过usercode查找
+    console.log('Searching user by usercode or email:', identifier);
+    // 使用OR条件一次查询，减少数据库请求
     ({ data: user, error: authError } = await supabase
       .from('vw_users')
       .select('*')
-      .eq('usercode', identifier)
+      .or(`usercode.eq.${identifier},email.eq.${identifier}`)
       .single());
 
-    console.log('Usercode search result:', { found: !!user, error: authError?.message });
-
-    // 如果usercode查找失败，尝试通过邮箱查找
-    if (authError || !user) {
-      console.log('Searching user by email:', identifier);
-      ({ data: user, error: authError } = await supabase
-        .from('vw_users')
-        .select('*')
-        .eq('email', identifier)
-        .single());
-      console.log('Email search result:', { found: !!user, error: authError?.message });
-    }
+    console.log('User search result:', { found: !!user, error: authError?.message });
 
     if (authError || !user) {
       console.log('User not found');
@@ -62,22 +51,23 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('Getting user roles');
-    // 获取用户角色信息
-    const { data: userRoles, error: rolesError } = await supabase
+    // 使用JOIN查询一次获取用户角色信息，减少数据库请求
+    const { data: userWithRoles, error: rolesError } = await supabase
       .from('vw_user_roles')
-      .select('role_id')
+      .select(`
+        vw_roles (
+          id,
+          name,
+          type
+        )
+      `)
       .eq('user_id', user.id);
 
     let roles: { id: string; name: string; type: string }[] = [];
-    if (!rolesError && userRoles && userRoles.length > 0) {
-      const roleIds = userRoles.map(ur => ur.role_id);
-      const { data: rolesData } = await supabase
-        .from('vw_roles')
-        .select('id, name, type')
-        .in('id', roleIds);
-      if (rolesData) {
-        roles = rolesData;
-      }
+    if (!rolesError && userWithRoles && userWithRoles.length > 0) {
+      roles = userWithRoles
+        .map(ur => ur.vw_roles)
+        .filter((role): role is { id: string; name: string; type: string } => role !== null);
     }
     console.log('User roles:', roles.length);
 
@@ -88,29 +78,32 @@ export async function POST(request: NextRequest) {
     // 计算token过期时间（7天）
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
+    const now = new Date().toISOString();
+    const ipAddress = request.ip || 'unknown';
 
-    console.log('Storing token to database');
-    // 存储token到数据库
-    await supabase
-      .from('vw_tokens')
-      .insert({
-        token,
-        user_id: user.id,
-        expires_at: expiresAt.toISOString(),
-        ip_address: request.ip || 'unknown',
-        device_info: request.headers.get('user-agent') || 'unknown'
-      });
-
-    console.log('Recording operation log');
-    // 记录登录成功日志
-    await createOperationLog('login', '成功', identifier, request.ip || 'unknown');
-
-    console.log('Updating last login time');
-    // 更新最后登录时间
-    await supabase
-      .from('vw_users')
-      .update({ last_login: new Date().toISOString() })
-      .eq('id', user.id);
+    console.log('Performing batch database operations');
+    // 并行执行多个数据库操作，减少等待时间
+    await Promise.all([
+      // 存储token到数据库
+      supabase
+        .from('vw_tokens')
+        .insert({
+          token,
+          user_id: user.id,
+          expires_at: expiresAt.toISOString(),
+          ip_address: ipAddress,
+          device_info: request.headers.get('user-agent') || 'unknown'
+        }),
+      
+      // 记录登录成功日志
+      createOperationLog('login', '成功', identifier, ipAddress),
+      
+      // 更新最后登录时间
+      supabase
+        .from('vw_users')
+        .update({ last_login: now })
+        .eq('id', user.id)
+    ]);
 
     console.log('Login successful, returning response');
     // 返回token和用户信息，由客户端存储到localStorage
@@ -168,33 +161,40 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: '无效的认证令牌' }, { status: 401 });
     }
 
-    // 获取用户信息
-    const { data: user, error } = await supabase
-      .from('vw_users')
-      .select('*')
-      .eq('id', decoded.userId)
-      .single();
+    // 并行执行用户信息和角色查询
+    const [userResult, rolesResult] = await Promise.all([
+      // 获取用户信息（只查询需要的字段）
+      supabase
+        .from('vw_users')
+        .select('id, username, email, status')
+        .eq('id', decoded.userId)
+        .single(),
+      
+      // 使用JOIN查询一次获取用户角色信息
+      supabase
+        .from('vw_user_roles')
+        .select(`
+          vw_roles (
+            id,
+            name,
+            type
+          )
+        `)
+        .eq('user_id', decoded.userId)
+    ]);
 
+    const { data: user, error } = userResult;
     if (error || !user) {
       return NextResponse.json({ error: '用户不存在' }, { status: 401 });
     }
 
-    // 获取用户角色信息
-    const { data: userRoles, error: rolesError } = await supabase
-      .from('vw_user_roles')
-      .select('role_id')
-      .eq('user_id', user.id);
-
+    // 处理角色数据
+    const { data: userWithRoles, error: rolesError } = rolesResult;
     let roles: { id: string; name: string; type: string }[] = [];
-    if (!rolesError && userRoles && userRoles.length > 0) {
-      const roleIds = userRoles.map(ur => ur.role_id);
-      const { data: rolesData } = await supabase
-        .from('vw_roles')
-        .select('id, name, type')
-        .in('id', roleIds);
-      if (rolesData) {
-        roles = rolesData;
-      }
+    if (!rolesError && userWithRoles && userWithRoles.length > 0) {
+      roles = userWithRoles
+        .map(ur => ur.vw_roles)
+        .filter((role): role is { id: string; name: string; type: string } => role !== null);
     }
 
     return NextResponse.json({ 

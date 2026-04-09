@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { createOperationLog } from '@/lib/operation-log';
-import { generateInviteCode } from '@/lib/invite-code';
 import { hashPassword } from '@/lib/password';
 
 export async function POST(request: NextRequest) {
@@ -36,7 +35,7 @@ export async function POST(request: NextRequest) {
     // 验证邀请码
     const { data: inviteCodeData, error: inviteCodeError } = await supabase
       .from('vw_invite_codes')
-      .select('*')
+      .select('id, generator_id, code')
       .eq('code', inviteCode)
       .eq('status', 'active')
       .single();
@@ -45,56 +44,57 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '无效的邀请码' }, { status: 400 });
     }
 
-    // 检查邮箱是否已存在
-    const { data: existingEmailUser } = await supabase
+    // 构建存在性检查条件
+    let existenceCheckQuery = supabase
       .from('vw_users')
-      .select('*')
-      .eq('email', email)
-      .single();
+      .select('id')
+      .or(`email.eq.${email},username.eq.${username},usercode.eq.${usercode}`);
 
-    if (existingEmailUser) {
-      return NextResponse.json({ error: '该邮箱已被注册' }, { status: 400 });
-    }
-
-    // 检查用户名是否已存在
-    const { data: existingUsernameUser } = await supabase
-      .from('vw_users')
-      .select('*')
-      .eq('username', username)
-      .single();
-
-    if (existingUsernameUser) {
-      return NextResponse.json({ error: '该用户名已被使用' }, { status: 400 });
-    }
-
-    // 检查usercode是否已存在
-    const { data: existingUsercodeUser } = await supabase
-      .from('vw_users')
-      .select('*')
-      .eq('usercode', usercode)
-      .single();
-
-    if (existingUsercodeUser) {
-      return NextResponse.json({ error: '该账号已被使用' }, { status: 400 });
-    }
-
-    // 检查手机号是否已存在（如果提供了手机号）
+    // 如果提供了手机号，也检查手机号
     if (phone) {
-      const { data: existingPhoneUser } = await supabase
-        .from('vw_users')
-        .select('*')
-        .eq('phone', phone)
-        .single();
+      existenceCheckQuery = existenceCheckQuery.or(`phone.eq.${phone}`);
+    }
 
-      if (existingPhoneUser) {
-        return NextResponse.json({ error: '该手机号已被注册' }, { status: 400 });
+    // 检查是否有重复的账号信息
+    const { data: existingUsers, error: existenceError } = await existenceCheckQuery;
+
+    if (existenceError) {
+      console.error('检查账号信息时出错:', existenceError);
+      return NextResponse.json({ error: '服务器错误' }, { status: 500 });
+    }
+
+    if (existingUsers && existingUsers.length > 0) {
+      // 确定具体的重复字段
+      for (const user of existingUsers) {
+        const { data: userDetails } = await supabase
+          .from('vw_users')
+          .select('email, username, usercode, phone')
+          .eq('id', user.id)
+          .single();
+
+        if (userDetails) {
+          if (userDetails.email === email) {
+            return NextResponse.json({ error: '该邮箱已被注册' }, { status: 400 });
+          }
+          if (userDetails.username === username) {
+            return NextResponse.json({ error: '该用户名已被使用' }, { status: 400 });
+          }
+          if (userDetails.usercode === usercode) {
+            return NextResponse.json({ error: '该账号已被使用' }, { status: 400 });
+          }
+          if (phone && userDetails.phone === phone) {
+            return NextResponse.json({ error: '该手机号已被注册' }, { status: 400 });
+          }
+        }
       }
     }
 
     // 加密密码
     const hashedPassword = await hashPassword(password);
+    const now = new Date().toISOString();
+    const ipAddress = request.ip || 'unknown';
 
-    // 开始事务
+    // 开始事务 - 插入新用户（包含source字段）
     const { data: newUser, error: insertError } = await supabase
       .from('vw_users')
       .insert({
@@ -104,55 +104,48 @@ export async function POST(request: NextRequest) {
         phone: phone || null,
         password_hash: hashedPassword,
         status: 'active',
-        created_at: new Date().toISOString()
+        source: '注册',
+        created_at: now
       })
-      .select()
+      .select('id, username, email')
       .single();
 
     if (insertError) {
       throw insertError;
     }
 
-    // 更新source字段
-    const { error: updateError } = await supabase
-      .from('vw_users')
-      .update({ source: '注册' })
-      .eq('id', newUser.id);
-
-    if (updateError) {
-      console.error('更新source字段错误:', updateError);
-      // 继续执行，不中断流程
-    }
-
-    // 更新邀请码状态
-    await supabase
-      .from('vw_invite_codes')
-      .update({ status: 'used', used_by: newUser.id, used_at: new Date().toISOString() })
-      .eq('id', inviteCodeData.id);
-
-    // 记录邀请关系
-    if (inviteCodeData.generator_id) {
-      await supabase
-        .from('vw_invite_relations')
-        .insert({
-          inviter_id: inviteCodeData.generator_id,
-          invitee_id: newUser.id,
-          invite_code: inviteCodeData.code,
-          created_at: new Date().toISOString()
-        });
-    }
-
-    // 记录注册成功日志
-    await createOperationLog('register', '成功', email, request.ip || 'unknown');
+    // 并行执行后续操作
+    await Promise.all([
+      // 更新邀请码状态
+      supabase
+        .from('vw_invite_codes')
+        .update({ 
+          status: 'used', 
+          used_by: newUser.id, 
+          used_at: now 
+        })
+        .eq('id', inviteCodeData.id),
+      
+      // 记录邀请关系（如果有邀请人）
+      ...(inviteCodeData.generator_id ? [
+        supabase
+          .from('vw_invite_relations')
+          .insert({
+            inviter_id: inviteCodeData.generator_id,
+            invitee_id: newUser.id,
+            invite_code: inviteCodeData.code,
+            created_at: now
+          })
+      ] : []),
+      
+      // 记录注册成功日志
+      createOperationLog('register', '成功', email, ipAddress)
+    ]);
 
     return NextResponse.json({ 
       success: true, 
       message: '注册成功！请登录',
-      user: {
-        id: newUser.id,
-        username: newUser.username,
-        email: newUser.email
-      }
+      user: newUser
     });
   } catch (error) {
     console.error('注册错误:', error);

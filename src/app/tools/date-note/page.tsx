@@ -86,6 +86,14 @@ const DateNotePage = () => {
   const [invitesLoading, setInvitesLoading] = useState(false);
   const [showStatistics, setShowStatistics] = useState(true);
   const [statisticsType, setStatisticsType] = useState<'color' | 'icon'>('color');
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [dateRange, setDateRange] = useState({
+    start: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(),
+    end: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0, 23, 59, 59).toISOString()
+  });
+  const [iconSearch, setIconSearch] = useState('');
+  const [customIconText, setCustomIconText] = useState('');
 
   // 图标列表
   const icons = [
@@ -321,6 +329,18 @@ const DateNotePage = () => {
       fetchEntries(selectedDiary);
     }
   }, [selectedDiary, isLoggedIn, fetchEntries]);
+
+  // 当日历月份变化时，同步更新日记列表的查询时间范围
+  useEffect(() => {
+    // 更新日期范围为当前选择的月份
+    const startDate = new Date(currentYear, currentMonth, 1);
+    const endDate = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59);
+    
+    setDateRange({
+      start: startDate.toISOString(),
+      end: endDate.toISOString()
+    });
+  }, [currentMonth, currentYear]);
 
   // 处理添加日记本
   const handleAddDiary = async () => {
@@ -641,10 +661,7 @@ const DateNotePage = () => {
   };
 
   // 简单的日历组件
-  const SimpleCalendar = ({ selected, onSelect, renderCell }: any) => {
-    const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
-    const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-
+  const SimpleCalendar = ({ selected, onSelect, renderCell, currentMonth, currentYear, onMonthChange }: any) => {
     const getDaysInMonth = (month: number, year: number) => {
       return new Date(year, month + 1, 0).getDate();
     };
@@ -675,10 +692,9 @@ const DateNotePage = () => {
             className="p-2 hover:bg-gray-100 rounded-full"
             onClick={() => {
               if (currentMonth === 0) {
-                setCurrentMonth(11);
-                setCurrentYear(currentYear - 1);
+                onMonthChange(11, currentYear - 1);
               } else {
-                setCurrentMonth(currentMonth - 1);
+                onMonthChange(currentMonth - 1, currentYear);
               }
             }}
           >
@@ -691,10 +707,9 @@ const DateNotePage = () => {
             className="p-2 hover:bg-gray-100 rounded-full"
             onClick={() => {
               if (currentMonth === 11) {
-                setCurrentMonth(0);
-                setCurrentYear(currentYear + 1);
+                onMonthChange(0, currentYear + 1);
               } else {
-                setCurrentMonth(currentMonth + 1);
+                onMonthChange(currentMonth + 1, currentYear);
               }
             }}
           >
@@ -894,6 +909,12 @@ const DateNotePage = () => {
                             selected={selectedDate}
                             onSelect={handleSelectDate}
                             renderCell={renderCalendarCell}
+                            currentMonth={currentMonth}
+                            currentYear={currentYear}
+                            onMonthChange={(month, year) => {
+                              setCurrentMonth(month);
+                              setCurrentYear(year);
+                            }}
                           />
                           <hr className="my-4" />
                           <div>
@@ -931,23 +952,53 @@ const DateNotePage = () => {
                   {/* 日记列表 */}
                   {activeTab === 'list' && (
                     <div>
-                      <div className="flex justify-between items-center mb-4">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                         <h2 className="text-base sm:text-lg font-semibold">日记列表</h2>
-                        <select 
-                          className="border rounded-md px-3 py-2 w-[200px]"
-                          value={selectedDiary}
-                          onChange={(e) => setSelectedDiary(e.target.value)}
-                        >
-                          {diaries.map(diary => (
-                            <option key={diary.id} value={diary.id}>
-                              {diary.name}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                          <select 
+                            className="border rounded-md px-3 py-2 w-full sm:w-[200px]"
+                            value={selectedDiary}
+                            onChange={(e) => setSelectedDiary(e.target.value)}
+                          >
+                            {diaries.map(diary => (
+                              <option key={diary.id} value={diary.id}>
+                                {diary.name}
+                              </option>
+                            ))}
+                          </select>
+                          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                            <input
+                              type="date"
+                              className="border rounded-md px-3 py-2"
+                              value={dateRange.start.split('T')[0]}
+                              onChange={(e) => setDateRange(prev => ({
+                                ...prev,
+                                start: new Date(e.target.value).toISOString()
+                              }))}
+                            />
+                            <span className="flex items-center">至</span>
+                            <input
+                              type="date"
+                              className="border rounded-md px-3 py-2"
+                              value={dateRange.end.split('T')[0]}
+                              onChange={(e) => setDateRange(prev => ({
+                                ...prev,
+                                end: new Date(e.target.value + 'T23:59:59').toISOString()
+                              }))}
+                            />
+                          </div>
+                        </div>
                       </div>
                       <div className="space-y-3">
                         {entries
-                          .filter(entry => entry.diaryId === selectedDiary)
+                          .filter(entry => {
+                            const entryDate = new Date(entry.startTime);
+                            const startDate = new Date(dateRange.start);
+                            const endDate = new Date(dateRange.end);
+                            return entry.diaryId === selectedDiary && 
+                                   entryDate >= startDate && 
+                                   entryDate <= endDate;
+                          })
                           .map(entry => (
                             <div key={entry.id} className="p-3 border rounded-md flex justify-between">
                               <div className="flex-1">
@@ -984,9 +1035,18 @@ const DateNotePage = () => {
                               )}
                             </div>
                           ))}
-                        {entries.filter(entry => entry.diaryId === selectedDiary).length === 0 && (
+                        {entries
+                          .filter(entry => {
+                            const entryDate = new Date(entry.startTime);
+                            const startDate = new Date(dateRange.start);
+                            const endDate = new Date(dateRange.end);
+                            return entry.diaryId === selectedDiary && 
+                                   entryDate >= startDate && 
+                                   entryDate <= endDate;
+                          })
+                          .length === 0 && (
                           <p className="text-gray-500 text-center py-4">
-                            该日记本暂无日记
+                            该时间范围内暂无日记
                           </p>
                         )}
                       </div>
@@ -1582,18 +1642,56 @@ const DateNotePage = () => {
                       />
                     </div>
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     <label className="text-sm font-medium block">选择图标</label>
-                    <div className="grid grid-cols-8 gap-1 max-h-20 overflow-y-auto">
-                      {icons.map((icon, index) => (
+                    <div className="space-y-2">
+                      {/* 图标搜索 */}
+                      <input
+                        type="text"
+                        className="w-full border rounded-md px-3 py-2 text-sm"
+                        placeholder="搜索图标..."
+                        value={iconSearch}
+                        onChange={(e) => setIconSearch(e.target.value)}
+                      />
+                      
+                      {/* 文字生成图标 */}
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          className="flex-1 border rounded-md px-3 py-2 text-sm"
+                          placeholder="输入文字生成图标"
+                          value={customIconText}
+                          onChange={(e) => setCustomIconText(e.target.value)}
+                        />
                         <button
-                          key={index}
-                          className={`w-8 h-8 flex items-center justify-center rounded-full ${newEntry.icon === icon ? 'bg-blue-100' : 'hover:bg-gray-100'}`}
-                          onClick={() => setNewEntry({ ...newEntry, icon })}
+                          className="px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
+                          onClick={() => {
+                            if (customIconText) {
+                              setNewEntry({ ...newEntry, icon: customIconText });
+                              setCustomIconText('');
+                            }
+                          }}
+                          disabled={!customIconText}
                         >
-                          {icon}
+                          使用
                         </button>
-                      ))}
+                      </div>
+                      
+                      {/* 图标选择网格 */}
+                      <div className="grid grid-cols-8 gap-1 max-h-32 overflow-y-auto">
+                        {icons
+                          .filter(icon => icon.toLowerCase().includes(iconSearch.toLowerCase()))
+                          .map((icon, index) => (
+                            <button
+                              key={index}
+                              className={`w-8 h-8 flex items-center justify-center rounded-full ${newEntry.icon === icon ? 'bg-blue-100' : 'hover:bg-gray-100'}`}
+                              onClick={() => setNewEntry({ ...newEntry, icon })}
+                              title={icon}
+                            >
+                              {icon}
+                            </button>
+                          ))}
+                      </div>
                     </div>
                   </div>
                   <div className="space-y-1">

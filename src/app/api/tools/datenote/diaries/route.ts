@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { verifyJwt } from '@/lib/jwt';
 
-// 从请求头获取用户信息
-async function getUserFromRequest(request: NextRequest) {
+// 验证用户并获取用户ID
+async function verifyUser(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
   if (!authHeader) {
     return null;
@@ -15,41 +15,21 @@ async function getUserFromRequest(request: NextRequest) {
     return null;
   }
 
-  // 获取用户信息
+  // 只需要验证用户是否存在，不需要获取完整信息
   const { data: user } = await supabase
     .from('vw_users')
-    .select('*')
+    .select('id')
     .eq('id', decoded.userId)
     .single();
 
-  if (!user) {
-    return null;
-  }
-
-  // 获取用户角色
-  const { data: userRoles } = await supabase
-    .from('vw_user_roles')
-    .select('role_id')
-    .eq('user_id', user.id);
-
-  if (userRoles) {
-    const roleIds = userRoles.map(ur => ur.role_id);
-    const { data: roles } = await supabase
-      .from('vw_roles')
-      .select('*')
-      .in('id', roleIds);
-
-    user.roles = roles || [];
-  }
-
-  return user;
+  return user?.id;
 }
 
 // 创建日记本
 export async function POST(request: NextRequest) {
   try {
-    const user = await getUserFromRequest(request);
-    if (!user) {
+    const userId = await verifyUser(request);
+    if (!userId) {
       return NextResponse.json({ error: '请先登录' }, { status: 401 });
     }
 
@@ -62,7 +42,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabase
       .from('tool_datenote_diaries')
       .insert({
-        user_id: user.id,
+        user_id: userId,
         name,
         permission
       })
@@ -84,36 +64,39 @@ export async function POST(request: NextRequest) {
 // 获取日记本列表
 export async function GET(request: NextRequest) {
   try {
-    const user = await getUserFromRequest(request);
-    if (!user) {
+    const userId = await verifyUser(request);
+    if (!userId) {
       return NextResponse.json({ error: '请先登录' }, { status: 401 });
     }
 
-    // 查询用户创建的日记本
-    const { data: userDiaries, error: userDiariesError } = await supabase
-      .from('tool_datenote_diaries')
-      .select('*')
-      .eq('user_id', user.id);
+    // 并行查询用户创建的和共享的日记本
+    const [userDiariesResult, sharedDiariesResult] = await Promise.all([
+      // 查询用户创建的日记本
+      supabase
+        .from('tool_datenote_diaries')
+        .select('*')
+        .eq('user_id', userId),
+      
+      // 查询用户被邀请的日记本
+      supabase
+        .from('tool_datenote_shares')
+        .select('tool_datenote_diaries(*)')
+        .eq('share_user_id', userId)
+        .eq('status', 'accepted')
+    ]);
 
-    if (userDiariesError) {
-      console.error('查询用户日记本失败:', userDiariesError);
+    if (userDiariesResult.error) {
+      console.error('查询用户日记本失败:', userDiariesResult.error);
       return NextResponse.json({ error: '查询日记本失败' }, { status: 500 });
     }
 
-    // 查询用户被邀请的日记本
-    const { data: sharedDiaries, error: sharedDiariesError } = await supabase
-      .from('tool_datenote_shares')
-      .select('tool_datenote_diaries(*)')
-      .eq('share_user_id', user.id)
-      .eq('status', 'accepted');
-
-    if (sharedDiariesError) {
-      console.error('查询共享日记本失败:', sharedDiariesError);
+    if (sharedDiariesResult.error) {
+      console.error('查询共享日记本失败:', sharedDiariesResult.error);
       return NextResponse.json({ error: '查询日记本失败' }, { status: 500 });
     }
 
-    const sharedDiaryList = sharedDiaries.map((share: any) => share.tool_datenote_diaries);
-    const allDiaries = [...(userDiaries || []), ...sharedDiaryList];
+    const sharedDiaryList = (sharedDiariesResult.data || []).map((share: any) => share.tool_datenote_diaries);
+    const allDiaries = [...(userDiariesResult.data || []), ...sharedDiaryList];
 
     return NextResponse.json({ success: true, data: allDiaries });
   } catch (error) {
@@ -125,8 +108,8 @@ export async function GET(request: NextRequest) {
 // 删除日记本
 export async function DELETE(request: NextRequest) {
   try {
-    const user = await getUserFromRequest(request);
-    if (!user) {
+    const userId = await verifyUser(request);
+    if (!userId) {
       return NextResponse.json({ error: '请先登录' }, { status: 401 });
     }
 
@@ -137,10 +120,10 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: '缺少必要参数' }, { status: 400 });
     }
 
-    // 验证用户是否是日记本的创建者
+    // 验证用户是否是日记本的创建者（只查询必要字段）
     const { data: diary, error: diaryError } = await supabase
       .from('tool_datenote_diaries')
-      .select('*')
+      .select('user_id')
       .eq('id', diaryId)
       .single();
 
@@ -149,43 +132,43 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: '查询日记本失败' }, { status: 500 });
     }
 
-    if (diary.user_id !== user.id) {
+    if (diary.user_id !== userId) {
       return NextResponse.json({ error: '只有创建者可以删除日记本' }, { status: 403 });
     }
 
-    // 开始事务
-    const client = supabase;
+    // 并行执行删除操作
+    const [shareResult, entryResult, diaryResult] = await Promise.all([
+      // 删除该日记本的所有共享记录
+      supabase
+        .from('tool_datenote_shares')
+        .delete()
+        .eq('diary_id', diaryId),
+      
+      // 删除该日记本的所有日记
+      supabase
+        .from('tool_datenote_entries')
+        .delete()
+        .eq('diary_id', diaryId),
+      
+      // 删除日记本
+      supabase
+        .from('tool_datenote_diaries')
+        .delete()
+        .eq('id', diaryId)
+    ]);
 
-    // 删除该日记本的所有共享记录
-    const { error: shareError } = await client
-      .from('tool_datenote_shares')
-      .delete()
-      .eq('diary_id', diaryId);
-
-    if (shareError) {
-      console.error('删除共享记录失败:', shareError);
+    if (shareResult.error) {
+      console.error('删除共享记录失败:', shareResult.error);
       return NextResponse.json({ error: '删除共享记录失败' }, { status: 500 });
     }
 
-    // 删除该日记本的所有日记
-    const { error: entryError } = await client
-      .from('tool_datenote_entries')
-      .delete()
-      .eq('diary_id', diaryId);
-
-    if (entryError) {
-      console.error('删除日记失败:', entryError);
+    if (entryResult.error) {
+      console.error('删除日记失败:', entryResult.error);
       return NextResponse.json({ error: '删除日记失败' }, { status: 500 });
     }
 
-    // 删除日记本
-    const { error: deleteError } = await client
-      .from('tool_datenote_diaries')
-      .delete()
-      .eq('id', diaryId);
-
-    if (deleteError) {
-      console.error('删除日记本失败:', deleteError);
+    if (diaryResult.error) {
+      console.error('删除日记本失败:', diaryResult.error);
       return NextResponse.json({ error: '删除日记本失败' }, { status: 500 });
     }
 
