@@ -1660,6 +1660,14 @@ const DateNotePage = () => {
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium block">选择图标</label>
+                    
+                    {/* 当前选中的图标 - 显眼位置 */}
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-4 text-center">
+                      <p className="text-xs text-gray-500 mb-2">当前选择的图标</p>
+                      <div className="text-5xl mb-2">{newEntry.icon}</div>
+                      <p className="text-xs text-gray-400">{newEntry.icon}</p>
+                    </div>
+                    
                     <div className="space-y-2">
                       {/* 图标搜索 */}
                       <input
