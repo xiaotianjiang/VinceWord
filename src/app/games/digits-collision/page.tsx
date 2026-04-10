@@ -72,7 +72,7 @@ function DigitsCollisionPage() {
   }, []);
 
   // 检查用户是否已在房间中
-  const checkMyRoom = async () => {
+  const checkMyRoom = useCallback(async () => {
     try {
       console.log('开始检查用户房间...');
       const response = await roomApi.getMyRoom();
@@ -98,14 +98,14 @@ function DigitsCollisionPage() {
     } catch (error) {
       console.error('检查用户房间错误:', error);
     }
-  };
+  }, [playerId]);
 
   // 获取玩家信息后，检查是否已在房间中
   useEffect(() => {
     if (playerId) {
       checkMyRoom();
     }
-  }, [playerId]);
+  }, [playerId, checkMyRoom]);
 
   // 获取房间列表
   const fetchRooms = async () => {

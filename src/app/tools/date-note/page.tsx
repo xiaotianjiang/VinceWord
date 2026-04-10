@@ -911,7 +911,7 @@ const DateNotePage = () => {
                             renderCell={renderCalendarCell}
                             currentMonth={currentMonth}
                             currentYear={currentYear}
-                            onMonthChange={(month, year) => {
+                            onMonthChange={(month: number, year: number) => {
                               setCurrentMonth(month);
                               setCurrentYear(year);
                             }}

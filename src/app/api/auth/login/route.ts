@@ -66,8 +66,8 @@ export async function POST(request: NextRequest) {
     let roles: { id: string; name: string; type: string }[] = [];
     if (!rolesError && userWithRoles && userWithRoles.length > 0) {
       roles = userWithRoles
-        .map(ur => ur.vw_roles)
-        .filter((role): role is { id: string; name: string; type: string } => role !== null);
+        .flatMap(ur => Array.isArray(ur.vw_roles) ? ur.vw_roles : [ur.vw_roles])
+        .filter((role): role is { id: string; name: string; type: string } => role !== null && role.id && role.name && role.type);
     }
     console.log('User roles:', roles.length);
 
@@ -193,8 +193,8 @@ export async function GET(request: NextRequest) {
     let roles: { id: string; name: string; type: string }[] = [];
     if (!rolesError && userWithRoles && userWithRoles.length > 0) {
       roles = userWithRoles
-        .map(ur => ur.vw_roles)
-        .filter((role): role is { id: string; name: string; type: string } => role !== null);
+        .flatMap(ur => Array.isArray(ur.vw_roles) ? ur.vw_roles : [ur.vw_roles])
+        .filter((role): role is { id: string; name: string; type: string } => role !== null && role.id && role.name && role.type);
     }
 
     return NextResponse.json({ 
