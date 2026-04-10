@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import { getCurrentUser } from '@/lib/session';
 import PermissionGuard from '@/components/PermissionGuard';
 import { PieChart, Pie, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -57,8 +59,8 @@ const DateNotePage = () => {
   const [newEntry, setNewEntry] = useState({
     diaryId: '',
     description: '',
-    startTime: new Date().toISOString(),
-    endTime: undefined as string | undefined,
+    startTime: new Date(),
+    endTime: undefined as Date | undefined,
     icon: '📝',
     color: '#3b82f6'
   });
@@ -381,13 +383,21 @@ const DateNotePage = () => {
       setEntriesLoading(true);
       setError(null);
       try {
+        // 将 Date 对象转换为 ISO 字符串
+        const entryData = {
+          ...newEntry,
+          diaryId,
+          startTime: newEntry.startTime.toISOString(),
+          endTime: newEntry.endTime ? newEntry.endTime.toISOString() : undefined
+        };
+        
         const response = await fetch('/api/tools/datenote/entries', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             ...getAuthHeaders()
           },
-          body: JSON.stringify({ ...newEntry, diaryId })
+          body: JSON.stringify(entryData)
         });
         const data = await response.json();
         if (data.success) {
@@ -397,8 +407,8 @@ const DateNotePage = () => {
           setNewEntry({
             diaryId: selectedDiary,
             description: '',
-            startTime: new Date().toISOString(),
-            endTime: undefined,
+            startTime: new Date(),
+            endTime: undefined as Date | undefined,
             icon: '📝',
             color: '#3b82f6'
           });
@@ -1619,26 +1629,32 @@ const DateNotePage = () => {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <label className="text-sm font-medium block">开始时间</label>
-                      <input
-                        type="datetime-local"
-                        step="1"
-                        className="w-full border rounded-md px-3 py-2"
-                        value={newEntry.startTime.slice(0, 19)}
-                        onChange={(e) => {
-                          console.log('选择的时间:', e.target.value);
-                          // 直接使用输入的值，确保时间格式正确
-                          setNewEntry({ ...newEntry, startTime: e.target.value + '.000Z' });
+                      <DatePicker
+                        selected={newEntry.startTime}
+                        onChange={(date: Date | null) => {
+                          if (date) {
+                            setNewEntry({ ...newEntry, startTime: date });
+                          }
                         }}
+                        showTimeSelect
+                        timeFormat="HH:mm:ss"
+                        timeIntervals={1}
+                        dateFormat="yyyy-MM-dd HH:mm:ss"
+                        className="w-full border rounded-md px-3 py-2"
                       />
                     </div>
                     <div className="space-y-1">
                       <label className="text-sm font-medium block">结束时间（可选）</label>
-                      <input
-                        type="datetime-local"
-                        step="1"
+                      <DatePicker
+                        selected={newEntry.endTime}
+                        onChange={(date: Date | null) => {
+                          setNewEntry({ ...newEntry, endTime: date || undefined });
+                        }}
+                        showTimeSelect
+                        timeFormat="HH:mm:ss"
+                        timeIntervals={1}
+                        dateFormat="yyyy-MM-dd HH:mm:ss"
                         className="w-full border rounded-md px-3 py-2"
-                        value={newEntry.endTime ? newEntry.endTime.slice(0, 19) : ''}
-                        onChange={(e) => setNewEntry({ ...newEntry, endTime: e.target.value ? e.target.value + '.000Z' : undefined })}
                       />
                     </div>
                   </div>
