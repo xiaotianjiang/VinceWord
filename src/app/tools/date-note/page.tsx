@@ -780,24 +780,24 @@ const DateNotePage = () => {
       ) : (
         <>
           {/* 顶部导航 */}
-          <header className="bg-white shadow-sm border-b">
+          <header className="bg-white shadow-sm border-b border-gray-100">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">《事纪》</h1>
-              <div className="flex items-center gap-4">
+              <h1 className="text-xl sm:text-2xl font-semibold text-gray-800">《事纪》</h1>
+              <div className="flex items-center gap-3">
                 <button 
-                  className="px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm sm:text-base"
+                  className="px-3 py-2 bg-white border border-gray-200 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all text-sm font-medium shadow-sm"
                   onClick={() => setIsAddDiaryOpen(true)}
                 >
                   新建日记本
                 </button>
                 <button 
-                  className="px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm sm:text-base"
+                  className="px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all text-sm font-medium shadow-sm"
                   onClick={() => setIsAddEntryOpen(true)}
                 >
                   新建日记
                 </button>
                 <button 
-                  className="px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors relative text-sm sm:text-base"
+                  className="px-3 py-2 bg-white border border-gray-200 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all relative text-sm font-medium shadow-sm"
                   onClick={() => {
                     setIsInviteModalOpen(true);
                     fetchUserInvites();
@@ -805,7 +805,7 @@ const DateNotePage = () => {
                 >
                   查看邀请
                   {userInvites.length > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                       {userInvites.length}
                     </span>
                   )}
@@ -822,17 +822,17 @@ const DateNotePage = () => {
               </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
               {/* 左侧日记本列表 */}
               <div className="lg:col-span-1">
-                <div className="bg-white rounded-lg shadow-sm border p-4">
-                  <h2 className="text-base sm:text-lg font-semibold mb-4">日记本</h2>
+                <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-4">
+                  <h2 className="text-base sm:text-lg font-semibold mb-4 text-gray-800">日记本</h2>
                   <div className="max-h-[500px] overflow-y-auto">
-                    <ul className="space-y-2">
+                    <ul className="space-y-1">
                       {diaries.map(diary => (
                         <li key={diary.id} className="flex items-center gap-2">
                           <button 
-                            className={`flex-1 text-left px-3 py-2 rounded-md ${selectedDiary === diary.id ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}
+                            className={`flex-1 text-left px-3 py-2 rounded-md transition-all ${selectedDiary === diary.id ? 'bg-blue-50 text-blue-600 font-medium' : 'hover:bg-gray-50'}`}
                             onClick={() => setSelectedDiary(diary.id)}
                           >
                             <span className="mr-2">
@@ -845,11 +845,12 @@ const DateNotePage = () => {
                           {/* 只有创建者可以删除 */}
                           {diary.userId === user?.id && (
                             <button
-                              className="p-1 text-red-500 hover:text-red-700"
+                              className="p-1.5 text-gray-400 hover:text-red-500 transition-colors rounded-full hover:bg-red-50"
                               onClick={() => {
                                 setDiaryToDelete(diary);
                                 setIsDeleteDialogOpen(true);
                               }}
+                              title="删除日记本"
                             >
                               🗑️
                             </button>
@@ -863,29 +864,29 @@ const DateNotePage = () => {
 
               {/* 右侧内容区 */}
               <div className="lg:col-span-3">
-                <div className="bg-white rounded-lg shadow-sm border p-4">
+                <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-5">
                   {/* 标签页 */}
-                  <div className="flex border-b mb-4">
+                  <div className="flex border-b border-gray-200 mb-5">
                     <button 
-                      className={`px-3 py-1.5 sm:px-4 sm:py-2 ${activeTab === 'calendar' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600 hover:text-gray-900'} text-sm sm:text-base`}
+                      className={`px-4 py-2 transition-all ${activeTab === 'calendar' ? 'border-b-2 border-blue-500 text-blue-500 font-medium' : 'text-gray-500 hover:text-gray-700'}`}
                       onClick={() => setActiveTab('calendar')}
                     >
                       日历视图
                     </button>
                     <button 
-                      className={`px-3 py-1.5 sm:px-4 sm:py-2 ${activeTab === 'list' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600 hover:text-gray-900'} text-sm sm:text-base`}
+                      className={`px-4 py-2 transition-all ${activeTab === 'list' ? 'border-b-2 border-blue-500 text-blue-500 font-medium' : 'text-gray-500 hover:text-gray-700'}`}
                       onClick={() => setActiveTab('list')}
                     >
                       日记列表
                     </button>
                     <button 
-                      className={`px-3 py-1.5 sm:px-4 sm:py-2 ${activeTab === 'search' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600 hover:text-gray-900'} text-sm sm:text-base`}
+                      className={`px-4 py-2 transition-all ${activeTab === 'search' ? 'border-b-2 border-blue-500 text-blue-500 font-medium' : 'text-gray-500 hover:text-gray-700'}`}
                       onClick={() => setActiveTab('search')}
                     >
                       开放搜索
                     </button>
                     <button 
-                      className={`px-3 py-1.5 sm:px-4 sm:py-2 ${activeTab === 'share' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600 hover:text-gray-900'} text-sm sm:text-base`}
+                      className={`px-4 py-2 transition-all ${activeTab === 'share' ? 'border-b-2 border-blue-500 text-blue-500 font-medium' : 'text-gray-500 hover:text-gray-700'}`}
                       onClick={() => setActiveTab('share')}
                     >
                       共享管理
@@ -895,10 +896,10 @@ const DateNotePage = () => {
                   {/* 日历视图 */}
                   {activeTab === 'calendar' && (
                     <div>
-                      <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-base sm:text-lg font-semibold">日历</h2>
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-5">
+                        <h2 className="text-base sm:text-lg font-semibold text-gray-800">日历</h2>
                         <select 
-                          className="border rounded-md px-3 py-2 w-[200px]"
+                          className="border border-gray-200 rounded-md px-3 py-2 w-full sm:w-[200px] focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all"
                           value={selectedDiary}
                           onChange={(e) => setSelectedDiary(e.target.value)}
                         >
@@ -909,9 +910,11 @@ const DateNotePage = () => {
                           ))}
                         </select>
                       </div>
-                      {entriesLoading ? (
-                        <div className="flex justify-center items-center h-64">
-                          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
+                      {/* 数据加载中或尚未加载时显示加载动态 */}
+                      {entriesLoading || entries.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-64 bg-gray-50 rounded-lg">
+                          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+                          <p className="text-gray-500">加载中...</p>
                         </div>
                       ) : (
                         <>
@@ -1756,14 +1759,14 @@ const DateNotePage = () => {
                 </div>
                 <div className="p-4 border-t bg-gray-50 flex justify-end gap-3">
                   <button 
-                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 transition-all"
+                    className="px-4 py-2 border border-gray-200 rounded-md text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all text-sm font-medium"
                     onClick={() => setIsAddEntryOpen(false)}
                     disabled={entriesLoading}
                   >
                     取消
                   </button>
                   <button 
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium shadow-sm"
                     onClick={handleAddEntry}
                     disabled={entriesLoading}
                   >
