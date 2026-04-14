@@ -1596,16 +1596,18 @@ const DateNotePage = () => {
           {/* 新建日记对话框 */}
           {isAddEntryOpen && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-4 w-full max-w-lg">
-                <h2 className="text-xl font-semibold mb-3">新建日记</h2>
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <label className="text-sm font-medium block">选择日记本</label>
+              <div className="bg-white rounded-lg w-full max-w-lg max-h-[80vh] flex flex-col shadow-xl">
+                <div className="p-4 border-b bg-gray-50">
+                  <h2 className="text-lg font-semibold text-gray-800">新建日记</h2>
+                </div>
+                <div className="p-5 flex-1 overflow-y-auto space-y-4">
+                  {/* 日记本选择 */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 block">选择日记本</label>
                     <select
-                      className="w-full border rounded-md px-3 py-2"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       value={newEntry.diaryId || selectedDiary}
                       onChange={(e) => {
-                        console.log('选择的日记本:', e.target.value);
                         setNewEntry({ ...newEntry, diaryId: e.target.value });
                       }}
                     >
@@ -1616,19 +1618,23 @@ const DateNotePage = () => {
                       ))}
                     </select>
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-sm font-medium block">描述</label>
+                  
+                  {/* 描述 */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 block">描述</label>
                     <textarea
-                      className="w-full border rounded-md px-3 py-2"
-                      rows={2}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+                      rows={3}
                       value={newEntry.description}
                       onChange={(e) => setNewEntry({ ...newEntry, description: e.target.value })}
-                      placeholder="输入日记内容"
+                      placeholder="输入日记内容..."
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-sm font-medium block">开始时间</label>
+                  
+                  {/* 时间选择 */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700 block">开始时间</label>
                       <DatePicker
                         selected={newEntry.startTime}
                         onChange={(date: Date | null) => {
@@ -1640,11 +1646,11 @@ const DateNotePage = () => {
                         timeFormat="HH:mm:ss"
                         timeIntervals={1}
                         dateFormat="yyyy-MM-dd HH:mm:ss"
-                        className="w-full border rounded-md px-3 py-2"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       />
                     </div>
-                    <div className="space-y-1">
-                      <label className="text-sm font-medium block">结束时间（可选）</label>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700 block">结束时间（可选）</label>
                       <DatePicker
                         selected={newEntry.endTime}
                         onChange={(date: Date | null) => {
@@ -1654,41 +1660,50 @@ const DateNotePage = () => {
                         timeFormat="HH:mm:ss"
                         timeIntervals={1}
                         dateFormat="yyyy-MM-dd HH:mm:ss"
-                        className="w-full border rounded-md px-3 py-2"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       />
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium block">选择图标</label>
+                  
+                  {/* 图标选择 */}
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium text-gray-700 block">选择图标</label>
                     
-                    {/* 当前选中的图标 - 显眼位置 */}
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-4 text-center">
-                      <p className="text-xs text-gray-500 mb-2">当前选择的图标</p>
-                      <div className="text-5xl mb-2">{newEntry.icon}</div>
-                      <p className="text-xs text-gray-400">{newEntry.icon}</p>
+                    {/* 当前选中的图标 */}
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 flex items-center gap-3 transition-all hover:shadow-sm">
+                      <div className="text-3xl">{newEntry.icon}</div>
+                      <div>
+                        <p className="text-xs text-gray-500">当前选择</p>
+                        <p className="text-sm font-medium text-gray-800">{newEntry.icon}</p>
+                      </div>
                     </div>
                     
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {/* 图标搜索 */}
-                      <input
-                        type="text"
-                        className="w-full border rounded-md px-3 py-2 text-sm"
-                        placeholder="搜索图标..."
-                        value={iconSearch}
-                        onChange={(e) => setIconSearch(e.target.value)}
-                      />
+                      <div className="relative">
+                        <input
+                          type="text"
+                          className="w-full border border-gray-300 rounded-md pl-10 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+                          placeholder="搜索图标..."
+                          value={iconSearch}
+                          onChange={(e) => setIconSearch(e.target.value)}
+                        />
+                        <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                          🔍
+                        </div>
+                      </div>
                       
                       {/* 文字生成图标 */}
                       <div className="flex gap-2">
                         <input
                           type="text"
-                          className="flex-1 border rounded-md px-3 py-2 text-sm"
+                          className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
                           placeholder="输入文字生成图标"
                           value={customIconText}
                           onChange={(e) => setCustomIconText(e.target.value)}
                         />
                         <button
-                          className="px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
+                          className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                           onClick={() => {
                             if (customIconText) {
                               setNewEntry({ ...newEntry, icon: customIconText });
@@ -1702,15 +1717,16 @@ const DateNotePage = () => {
                       </div>
                       
                       {/* 图标选择网格 */}
-                      <div className="grid grid-cols-8 gap-1 max-h-32 overflow-y-auto">
+                      <div className="grid grid-cols-8 gap-2 max-h-32 overflow-y-auto p-2 bg-gray-50 rounded-lg border border-gray-200">
                         {icons
                           .filter(icon => icon.toLowerCase().includes(iconSearch.toLowerCase()))
                           .map((icon, index) => (
                             <button
                               key={index}
-                              className={`w-8 h-8 flex items-center justify-center rounded-full ${newEntry.icon === icon ? 'bg-blue-100' : 'hover:bg-gray-100'}`}
+                              className={`w-9 h-9 flex items-center justify-center rounded-full transition-all ${newEntry.icon === icon ? 'bg-blue-100 ring-2 ring-blue-500' : 'hover:bg-gray-100'}`}
                               onClick={() => setNewEntry({ ...newEntry, icon })}
                               title={icon}
+                              aria-label={`选择图标 ${icon}`}
                             >
                               {icon}
                             </button>
@@ -1718,34 +1734,36 @@ const DateNotePage = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-sm font-medium block">选择颜色</label>
-                    <div className="grid grid-cols-10 gap-1">
+                  
+                  {/* 颜色选择 */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 block">选择颜色</label>
+                    <div className="grid grid-cols-10 gap-2">
                       {colors.map((color, index) => (
                         <button
                           key={index}
-                          className={`w-6 h-6 rounded-full transition-all duration-200 ${newEntry.color === color ? 'scale-110' : 'hover:scale-105'}`}
+                          className={`w-7 h-7 rounded-full transition-all duration-200 ${newEntry.color === color ? 'scale-110 ring-2 ring-gray-300' : 'hover:scale-105'}`}
                           style={{ 
-                            backgroundColor: color,
-                            boxShadow: newEntry.color === color ? '0 0 0 1px white, 0 0 0 2px ' + color : '0 1px 2px rgba(0, 0, 0, 0.1)'
+                            backgroundColor: color
                           }}
                           onClick={() => setNewEntry({ ...newEntry, color })}
                           aria-label={`选择颜色 ${color}`}
+                          title={color}
                         />
                       ))}
                     </div>
                   </div>
                 </div>
-                <div className="flex justify-end gap-2 mt-6">
+                <div className="p-4 border-t bg-gray-50 flex justify-end gap-3">
                   <button 
-                    className="px-4 py-2 border rounded-md hover:bg-gray-100"
+                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 transition-all"
                     onClick={() => setIsAddEntryOpen(false)}
                     disabled={entriesLoading}
                   >
                     取消
                   </button>
                   <button 
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={handleAddEntry}
                     disabled={entriesLoading}
                   >
