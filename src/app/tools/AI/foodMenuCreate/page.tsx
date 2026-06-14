@@ -602,7 +602,7 @@ export default function FoodMenuCreate() {
       setStep(2);
     }
   };
-  
+
   // 解析AI返回的响应
   const parseAIResponse = (response: string): any[] => {
     try {
