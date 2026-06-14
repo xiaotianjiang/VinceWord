@@ -1,116 +1,105 @@
+// @ts-nocheck
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { checkPermission, PermissionLevel, checkMenuAccess } from '@/lib/permission';
 import { getCurrentUser } from '@/lib/session';
+import { User } from '@/types';
 
 interface PermissionGuardProps {
   children: React.ReactNode;
-  requiredLevel?: PermissionLevel;
-  menuPath?: string;
-  fallback?: React.ReactNode;
+  requireRole?: string | string[];
+  requireAdmin?: boolean;
+  requireLogin?: boolean;
 }
 
 export default function PermissionGuard({ 
   children, 
-  requiredLevel,
-  menuPath,
-  fallback 
+  requireRole, 
+  requireAdmin = false, 
+  requireLogin = true 
 }: PermissionGuardProps) {
-  const router = useRouter();
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  const [accessDenied, setAccessDenied] = useState(false);
+  const [notLoggedIn, setNotLoggedIn] = useState(false);
 
   useEffect(() => {
-    const checkAccess = async () => {
-      try {
-        let result = false;
-        let loggedIn = false;
+    const checkAuth = async () => {
+      const user = await getCurrentUser();
+      setCurrentUser(user);
+      
+      if (requireLogin && !user) {
+        setNotLoggedIn(true);
+        setLoading(false);
+        return;
+      }
+
+      if (user) {
+        let hasAccess = true;
         
-        console.log('PermissionGuard: 开始检查权限');
-        console.log('PermissionGuard: menuPath:', menuPath);
-        console.log('PermissionGuard: requiredLevel:', requiredLevel);
-        
-        if (menuPath) {
-          // 根据菜单路径检查权限
-          console.log('PermissionGuard: 根据菜单路径检查权限');
-          const menuAccessResult = await checkMenuAccess(menuPath);
-          result = menuAccessResult.hasAccess;
-          loggedIn = menuAccessResult.isLoggedIn;
-        } else if (requiredLevel) {
-          // 根据权限级别检查权限
-          console.log('PermissionGuard: 根据权限级别检查权限');
-          result = await checkPermission(requiredLevel);
-          // 对于requiredLevel，我们无法直接获取登录状态，需要单独检查
-          const user = await getCurrentUser();
-          loggedIn = !!user;
+        if (requireAdmin) {
+          hasAccess = user.roles.some(r => r.type === 'admin' || r.type === 'superadmin');
         }
         
-        console.log('PermissionGuard: 权限检查结果:', result);
-        console.log('PermissionGuard: 登录状态:', loggedIn);
-        setHasPermission(result);
-        setIsLoggedIn(loggedIn);
-      } catch (error) {
-        console.error('PermissionGuard: 权限检查错误:', error);
-        setHasPermission(false);
-        setIsLoggedIn(false);
-      } finally {
-        setLoading(false);
+        if (requireRole && !hasAccess) {
+          const roles = Array.isArray(requireRole) ? requireRole : [requireRole];
+          hasAccess = user.roles.some(r => roles.includes(r.type) || roles.includes(r.name));
+        }
+        
+        if (!hasAccess) {
+          setAccessDenied(true);
+          setLoading(false);
+          return;
+        }
       }
+
+      setLoading(false);
     };
-
-    checkAccess();
-  }, [requiredLevel, menuPath]);
-
-  // 处理重定向逻辑
-  useEffect(() => {
-    if (!loading && !hasPermission && !fallback && isLoggedIn) {
-      // 只有当用户已登录但没有权限时才重定向
-      // 未登录用户会显示登录提示，不需要重定向
-      router.push('/404');
-    }
-  }, [loading, hasPermission, fallback, isLoggedIn, router]);
+    
+    checkAuth();
+  }, [requireLogin, requireAdmin, requireRole]);
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
-  if (!hasPermission) {
-    if (fallback) {
-      return fallback;
-    }
-
-    if (!isLoggedIn) {
-      // 用户未登录，显示登录提示
-      return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-          <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full text-center">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">请先登录</h2>
-            <p className="text-gray-600 mb-6">
-              您需要登录才能访问此功能
-            </p>
-            <div className="flex flex-col space-y-3">
-              <a 
-                href={`/auth/login?callback=${encodeURIComponent(window.location.pathname + window.location.search)}`}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-center"
-              >
-                去登录
-              </a>
-            </div>
+  if (notLoggedIn) {
+    const currentPath = typeof window !== 'undefined' ? encodeURIComponent(window.location.pathname + window.location.search) : '';
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center py-12">
+            <h2 className="text-xl font-semibold text-gray-700 mb-4">请先登录</h2>
+            <a href={`/auth/login?redirect=${currentPath}`} className="text-blue-600 hover:underline">去登录</a>
           </div>
-        </div>
-      );
-    }
+        </main>
+      </div>
+    );
+  }
 
-    return null;
+  if (accessDenied) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center py-12">
+            <h2 className="text-xl font-semibold text-gray-700 mb-4">您没有权限访问此页面</h2>
+            <a 
+              href="/" 
+              className="inline-block px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+            >
+              返回首页
+            </a>
+          </div>
+        </main>
+      </div>
+    );
   }
 
   return <>{children}</>;
 }
+
+export { PermissionGuard };

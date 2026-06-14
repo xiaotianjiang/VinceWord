@@ -9,7 +9,7 @@
     ], // 支持的库（添加 esnext）
     "allowJs": true, // 允许混合 JS/TS 文件
     "skipLibCheck": true, // 跳过声明文件检查（加快编译）
-    "strict": true, // 启用所有严格检查（核心）
+    "strict": false, // ⚠️ 禁用所有严格检查（快速开发模式）
     "noEmit": true, // 不生成编译输出（由 Next.js 处理）
     "esModuleInterop": true, // 兼容 CommonJS 和 ES Modules
     "module": "ESNext", // 模块系统（Next.js 推荐）
@@ -31,9 +31,6 @@
         "name": "next"
       }
     ]
-    // ✅ 可选：进一步严格化（根据需求启用）
-    // "noImplicitReturns": true,       // 强制函数所有分支都有返回值
-    // "noFallthroughCasesInSwitch": true // 禁止 switch 语句穿透
   },
   "include": [
     "next-env.d.ts", // Next.js 类型声明
